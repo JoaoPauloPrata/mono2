@@ -1,0 +1,124 @@
+Parâmetros Otimizados - Janela 12
+Data/Hora: 2025-07-22 10:08:39
+============================================================
+
+BayesianRidge:
+------------------------------
+  alpha_1: 3.306242504141576e-07
+  alpha_2: 5.347746602583892e-06
+  alpha_init: None
+  compute_score: False
+  copy_X: True
+  fit_intercept: True
+  lambda_1: 4.098609717152555e-06
+  lambda_2: 5.666566321361542e-07
+  lambda_init: None
+  max_iter: None
+  n_iter: 899
+  tol: 0.001
+  verbose: False
+
+Ridge:
+------------------------------
+  alpha: 2.084423118582435
+  copy_X: True
+  fit_intercept: True
+  max_iter: 1684
+  positive: False
+  random_state: None
+  solver: lsqr
+  tol: 0.0001
+
+Tweedie:
+------------------------------
+  alpha: 0.41198904067240527
+  fit_intercept: True
+  link: auto
+  max_iter: 830
+  power: 1.9184977839317343
+  solver: lbfgs
+  tol: 0.0001
+  verbose: 0
+  warm_start: False
+
+RandomForest:
+------------------------------
+  bootstrap: True
+  ccp_alpha: 0.0
+  criterion: squared_error
+  max_depth: 5
+  max_features: log2
+  max_leaf_nodes: None
+  max_samples: None
+  min_impurity_decrease: 0.0
+  min_samples_leaf: 2
+  min_samples_split: 6
+  min_weight_fraction_leaf: 0.0
+  n_estimators: 285
+  n_jobs: -1
+  oob_score: False
+  random_state: None
+  verbose: 0
+  warm_start: False
+
+Bagging:
+------------------------------
+  base_estimator: deprecated
+  bootstrap: False
+  bootstrap_features: False
+  estimator: None
+  max_features: 0.7327713404303042
+  max_samples: 0.5906064345328208
+  n_estimators: 71
+  n_jobs: -1
+  oob_score: False
+  random_state: None
+  verbose: 0
+  warm_start: False
+
+AdaBoost:
+------------------------------
+  base_estimator: deprecated
+  estimator: None
+  learning_rate: 0.010778765841014329
+  loss: linear
+  n_estimators: 107
+  random_state: None
+
+GradientBoosting:
+------------------------------
+  alpha: 0.9
+  ccp_alpha: 0.0
+  criterion: friedman_mse
+  init: None
+  learning_rate: 0.02692347370813008
+  loss: squared_error
+  max_depth: 6
+  max_features: None
+  max_leaf_nodes: None
+  min_impurity_decrease: 0.0
+  min_samples_leaf: 1
+  min_samples_split: 7
+  min_weight_fraction_leaf: 0.0
+  n_estimators: 87
+  n_iter_no_change: None
+  random_state: None
+  subsample: 0.6007787658410143
+  tol: 0.0001
+  validation_fraction: 0.1
+  verbose: 0
+  warm_start: False
+
+LinearSVR:
+------------------------------
+  C: 1.284829137724085
+  dual: warn
+  epsilon: 0.023225206359998862
+  fit_intercept: True
+  intercept_scaling: 1.0
+  loss: epsilon_insensitive
+  max_iter: 4890
+  random_state: None
+  tol: 0.0006903075385877798
+  verbose: 0
+
