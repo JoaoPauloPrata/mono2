@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from scipy.stats import norm
 import numpy as np
@@ -91,34 +92,119 @@ class Evaluator:
         _, _, f1, _ = precision_recall_fscore_support(true_labels, pred_labels, average='binary', zero_division=0)
         return f1
 
-    def evaluateAllMetricsForAllMethods(self, window_count, top_n=None):
-        constituentAlgoritms = ["itemKNN", "BIAS", "userKNN", "SVD", "BIASEDMF"]
-        hybridAlgoritms = ["BayesianRidge", "Tweedie", "Ridge", "RandomForest", "Bagging", "AdaBoost", "GradientBoosting", "LinearSVR"] 
-        original_ratings = pd.read_csv(f"data/dataSplited/test_to_get_constituent_methods_{window_count}_.csv")
-        print("============= CONSTITUENTS ==============")
-        for constituent in constituentAlgoritms:
-            recs_from_constituent = pd.read_csv(f"data/filtered_predictions/window_{window_count}_constituent_methods__{constituent}.tsv", delimiter='\t')
-            recs_from_constituent = recs_from_constituent.groupby('user').filter(lambda x: len(x) >= 10)
-            partialOriginal = original_ratings[original_ratings['user'].isin(recs_from_constituent['user'])]
-            recs_from_constituent = recs_from_constituent.reset_index(drop=True)
-            partialOriginal = partialOriginal.reset_index(drop=True)
-            predictions = list(zip(recs_from_constituent['user'], recs_from_constituent['item'], recs_from_constituent['prediction']))
-            truth = list(zip(partialOriginal['user'], partialOriginal['item'], partialOriginal['rating']))
-            print(f"\nMétodo: {constituent}")
-            print("F1 global:", Evaluator.calculate_f1_global(predictions, truth, threshold=3.5))
+    @staticmethod
+    def calculate_mae(predictions, true_values):
+        pred_df = pd.DataFrame(predictions, columns=['user', 'item', 'prediction'])
+        true_df = pd.DataFrame(true_values, columns=['user', 'item', 'true_value'])
+        merged = pd.merge(pred_df, true_df, on=['user', 'item'])
+        return float(np.mean(np.abs(merged['true_value'] - merged['prediction'])))
 
-        print("\n============= HYBRIDS ==============")
-        for hybrid in hybridAlgoritms:
-            filePath = f"data/HybridPredictions/window_{window_count}_predicted{hybrid}.tsv"
-            recs_from_hybrid = pd.read_csv(filePath, delimiter='\t')
-            recs_from_hybrid = recs_from_hybrid.groupby('user').filter(lambda x: len(x) >= 10)
-            partialOriginal = original_ratings[original_ratings['user'].isin(recs_from_hybrid['user'])]
-            recs_from_hybrid = recs_from_hybrid.reset_index(drop=True)
-            partialOriginal = partialOriginal.reset_index(drop=True)
-            predictions = list(zip(recs_from_hybrid['user'], recs_from_hybrid['item'], recs_from_hybrid['prediction']))
-            truth = list(zip(partialOriginal['user'], partialOriginal['item'], partialOriginal['rating']))
-            print(f"\nMétodo: {hybrid}")
-            print("F1 global:", Evaluator.calculate_f1_global(predictions, truth, threshold=3.5))
+    def evaluateAllMetricsForAllMethods(self, window_count, top_n=None):
+        constituent_algorithms = ["itemKNN", "BIAS", "userKNN", "SVD", "BIASEDMF"]
+        hybrid_algorithms = ["BayesianRidge", "Tweedie", "Ridge", "RandomForest", "Bagging", "AdaBoost", "GradientBoosting", "LinearSVR"]
+
+        # Carrega ground truth
+        truth_df = pd.read_csv(f"data/dataSplited/test_to_get_constituent_methods_{window_count}_.csv")
+        truth_df = truth_df.rename(columns={"rating": "true_value"})
+
+        # NDCG@k
+        k = 10 if top_n is None else int(top_n)
+
+        # Resultados agregados
+        results = []
+
+        def compute_metrics_from_frames(pred_df: pd.DataFrame, truth_subset: pd.DataFrame, method_name: str):
+            # Filtra usuários com pelo menos 10 itens
+            pred_df = pred_df.groupby('user').filter(lambda x: len(x) >= 10)
+            truth_subset = truth_subset[truth_subset['user'].isin(pred_df['user'])]
+
+            if pred_df.empty or truth_subset.empty:
+                return
+
+            pred_df = pred_df.reset_index(drop=True)
+            truth_subset = truth_subset.reset_index(drop=True)
+
+            # Merge para RMSE/MAE
+            merged = pd.merge(pred_df, truth_subset, on=['user', 'item'])
+            if merged.empty:
+                return
+
+            rmse = float(np.sqrt(mean_squared_error(merged['true_value'], merged['prediction'])))
+            mae = float(np.mean(np.abs(merged['true_value'] - merged['prediction'])))
+
+            # NDCG por usuário
+            ndcgs = []
+            for user_id, g in pred_df.groupby('user'):
+                true_user = truth_subset[truth_subset['user'] == user_id]
+                if true_user.empty:
+                    continue
+                aligned = g.merge(true_user, on='item', how='left').fillna({'true_value': 0})
+                ndcgs.append(ndcg_score([aligned['true_value'].values], [aligned['prediction'].values], k=k))
+            ndcg_mean = float(np.mean(ndcgs)) if ndcgs else None
+
+            # F1 global (threshold fixo 3.5)
+            predictions_list = list(zip(merged['user'], merged['item'], merged['prediction']))
+            truth_list = list(zip(merged['user'], merged['item'], merged['true_value']))
+            f1 = float(Evaluator.calculate_f1_global(predictions_list, truth_list, threshold=3.5))
+
+            results.append({
+                'method': method_name,
+                'RMSE': rmse,
+                'NDCG': ndcg_mean,
+                'F1': f1,
+                'MAE': mae,
+            })
+
+        # Constituents
+        for constituent in constituent_algorithms:
+            path = f"data/filtered_predictions/window_{window_count}_constituent_methods__{constituent}.tsv"
+            recs_df = pd.read_csv(path, delimiter='\t')
+            recs_df = recs_df[['user', 'item', 'prediction']]
+            compute_metrics_from_frames(recs_df, truth_df, constituent)
+
+        # Hybrids: alinhar arquivos simples (apenas coluna de score) com um template
+        # Usar BIAS como template (mesma ordenação usada na geração das predições híbridas)
+        template_path = f"data/filtered_predictions/window_{window_count}_constituent_methods__BIAS.tsv"
+        template_df = pd.read_csv(template_path, delimiter='\t').sort_values('user').reset_index(drop=True)
+        template_df = template_df[['user', 'item']]
+
+        for hybrid in hybrid_algorithms:
+            file_path = f"data/HybridPredictions/window_{window_count}_predicted{hybrid}.tsv"
+            hyb_df = pd.read_csv(file_path, delimiter='\t')
+
+            # Se não houver colunas user/item, constrói usando o template
+            if not set(['user', 'item']).issubset(hyb_df.columns):
+                # Primeira coluna contém as predições
+                scores = hyb_df.iloc[:, 0].values
+                if len(scores) != len(template_df):
+                    # Tenta alinhar sem sort se tamanhos não batem
+                    template_alt = pd.read_csv(template_path, delimiter='\t')
+                    template_alt = template_alt[['user', 'item']]
+                    if len(scores) == len(template_alt):
+                        template_use = template_alt
+                    else:
+                        # Não é possível alinhar, pula método
+                        continue
+                else:
+                    template_use = template_df
+                pred_df = pd.DataFrame({
+                    'user': template_use['user'].values,
+                    'item': template_use['item'].values,
+                    'prediction': scores
+                })
+            else:
+                # Já veio no formato esperado
+                pred_df = hyb_df[['user', 'item', 'prediction']]
+
+            compute_metrics_from_frames(pred_df, truth_df, hybrid)
+
+        # Salva CSV agregado
+        os.makedirs('data/MetricsForMethods', exist_ok=True)
+        out_path = f"data/MetricsForMethods/MetricsForWindow{window_count}.csv"
+        out_df = pd.DataFrame(results).set_index('method')
+        out_df = out_df.loc[[*constituent_algorithms, *hybrid_algorithms]]
+        out_df.to_csv(out_path)
+        print(f"Métricas salvas em: {out_path}")
 
     def getGeoRisk(self, mat, alpha):
         ##### IMPORTANT

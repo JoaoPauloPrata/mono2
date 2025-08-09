@@ -1,0 +1,19 @@
+Parâmetros Otimizados - Janela 9
+Data/Hora: 2025-08-05 21:32:30
+============================================================
+
+BayesianRidge:
+------------------------------
+  alpha_1: 3.306242504141576e-07
+  alpha_2: 5.347746602583892e-06
+  alpha_init: None
+  compute_score: False
+  copy_X: True
+  fit_intercept: True
+  lambda_1: 4.098609717152555e-06
+  lambda_2: 5.666566321361542e-07
+  lambda_init: None
+  max_iter: 899
+  tol: 0.001
+  verbose: False
+

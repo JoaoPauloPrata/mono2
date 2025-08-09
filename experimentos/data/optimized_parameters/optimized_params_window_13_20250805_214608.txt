@@ -1,0 +1,16 @@
+Parâmetros Otimizados - Janela 13
+Data/Hora: 2025-08-05 21:46:08
+============================================================
+
+Tweedie:
+------------------------------
+  alpha: 0.41198904067240527
+  fit_intercept: True
+  link: auto
+  max_iter: 830
+  power: 1.9184977839317343
+  solver: lbfgs
+  tol: 0.0001
+  verbose: 0
+  warm_start: False
+

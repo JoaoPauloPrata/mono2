@@ -50,9 +50,14 @@ def run_constituent_methods():
 
 def run_hybrid_methods():
     recommender = Recommender()
-    recommender.run_hybrid_methods()
+    recommender.run_hybrid_methods(2)
+
+def runOptimization():
+    recommender = Recommender()
+    recommender.runOptimization()
 
 def evaluate_based_on_metric(metric):
     evaluator = Evaluator()
     evaluator.evaluateAllMetricsForAllMethods(metric)
+
 run_hybrid_methods()

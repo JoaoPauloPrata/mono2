@@ -1,0 +1,15 @@
+Parâmetros Otimizados - Janela 19
+Data/Hora: 2025-08-05 21:44:52
+============================================================
+
+Ridge:
+------------------------------
+  alpha: 0.21282315805420052
+  copy_X: True
+  fit_intercept: True
+  max_iter: 843
+  positive: False
+  random_state: None
+  solver: lsqr
+  tol: 0.0001
+

@@ -1,0 +1,18 @@
+Parâmetros Otimizados - Janela 11
+Data/Hora: 2025-08-05 22:03:02
+============================================================
+
+Bagging:
+------------------------------
+  bootstrap: True
+  bootstrap_features: False
+  estimator: None
+  max_features: 0.7984250789732434
+  max_samples: 0.7229163764267956
+  n_estimators: 96
+  n_jobs: -1
+  oob_score: False
+  random_state: None
+  verbose: 0
+  warm_start: False
+

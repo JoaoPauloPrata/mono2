@@ -1,0 +1,15 @@
+Parâmetros Otimizados - Janela 13
+Data/Hora: 2025-08-05 21:44:51
+============================================================
+
+Ridge:
+------------------------------
+  alpha: 2.084423118582435
+  copy_X: True
+  fit_intercept: True
+  max_iter: 1684
+  positive: False
+  random_state: None
+  solver: lsqr
+  tol: 0.0001
+

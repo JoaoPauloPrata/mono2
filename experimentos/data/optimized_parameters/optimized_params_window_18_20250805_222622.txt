@@ -1,0 +1,17 @@
+Parâmetros Otimizados - Janela 18
+Data/Hora: 2025-08-05 22:26:22
+============================================================
+
+LinearSVR:
+------------------------------
+  C: 1.7167946962329224
+  dual: auto
+  epsilon: 0.15230688458668534
+  fit_intercept: True
+  intercept_scaling: 1.0
+  loss: epsilon_insensitive
+  max_iter: 3612
+  random_state: None
+  tol: 0.000240893825622149
+  verbose: 0
+
