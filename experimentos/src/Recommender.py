@@ -7,24 +7,21 @@ from src.Methods.RegressionMethodsWithFineTuning import RegressionMethodsWithFin
 class Recommender:
     def __init__(self):
         pass 
-    def runRecomendations(self, train, test, window_number, path):
+    def runRecomendations(self, train, test, window_number, execution, path):
         print("Running recommendations for window " + str(window_number))
         recommender = ConstituentMethods()
-        recommender.recommenderWithItemKNN(train, test,  "window_" + str(window_number) + str(path) + "_itemKNN.tsv" )
-        recommender.recommenderWithUserKNN(train, test,   "window_" + str(window_number) + str(path) +"_userKNN.tsv")
-        recommender.recommenderWithSvd(train, test,   "window_" + str(window_number) + str(path) +"_SVD.tsv")  
-        recommender.recommenderWithBiasedMF(train, test,   "window_" + str(window_number) + str(path) +"_BIASEDMF.tsv")        
-        recommender.recommenderWithBias(train, test,   "window_" + str(window_number) + str(path) +"_BIAS.tsv")
+        recommender.recommenderWithItemKNN(train, test,  "window_" + str(window_number) + "_execution_" + str(execution) + "_" + str(path) + "_itemKNN.tsv" )
+        recommender.recommenderWithUserKNN(train, test,   "window_" + str(window_number) + "_execution_" + str(execution) + "_" + str(path) +"_userKNN.tsv")
+        recommender.recommenderWithSvd(train, test,   "window_" + str(window_number) + "_execution_" + str(execution) + "_" + str(path) +"_SVD.tsv")  
+        recommender.recommenderWithBiasedMF(train, test,   "window_" + str(window_number) + "_execution_" + str(execution) + "_" + str(path) +"_BIASEDMF.tsv")        
+        recommender.recommenderWithBias(train, test,   "window_" + str(window_number) + "_execution_" + str(execution) + "_" + str(path) +"_BIAS.tsv")
 
-    def run_hybrid_methods(self):
-        for i in range(1, 21):  
-            regression = RegressionMethodsWithFineTuning()
-            regression.loadAndPredict(i)
     def runOptimization(self):
         for i in range(1, 21):  
             regression = RegressionMethodsWithFineTuning()
             regression.loandAndOptimize(i)
         print("Hybrid methods with fine tuning completed.")
+
     def _normalize_windows(self, windows):
         """Normaliza o parâmetro de janelas para um iterável de inteiros."""
         if windows is None:
@@ -61,8 +58,7 @@ class Recommender:
         print("Recomendações sem fine-tuning concluídas.")
 
     # Mantido por compatibilidade: passa a usar o fluxo "após fine-tuning"
-    def run_hybrid_methods(self, windows=None):
-        for i in self._normalize_windows(windows):  
-            regression = RegressionMethodsWithFineTuning()
-            regression.loadAndPredictWithOptimizedModels(i)
+    def run_hybrid_methods(self, windows, execution):
+        regression = RegressionMethodsWithFineTuning()
+        regression.loadAndPredictWithOptimizedModels(windows, execution)
         print("Recomendações híbridas (compat) concluídas.")

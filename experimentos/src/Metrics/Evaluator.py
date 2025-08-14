@@ -99,7 +99,7 @@ class Evaluator:
         merged = pd.merge(pred_df, true_df, on=['user', 'item'])
         return float(np.mean(np.abs(merged['true_value'] - merged['prediction'])))
 
-    def evaluateAllMetricsForAllMethods(self, window_count, top_n=None):
+    def evaluateAllMetricsForAllMethods(self, window_count, execution,  top_n=None):
         constituent_algorithms = ["itemKNN", "BIAS", "userKNN", "SVD", "BIASEDMF"]
         hybrid_algorithms = ["BayesianRidge", "Tweedie", "Ridge", "RandomForest", "Bagging", "AdaBoost", "GradientBoosting", "LinearSVR"]
 
@@ -157,19 +157,19 @@ class Evaluator:
 
         # Constituents
         for constituent in constituent_algorithms:
-            path = f"data/filtered_predictions/window_{window_count}_constituent_methods__{constituent}.tsv"
+            path = f"data/filtered_predictions/window_{window_count}_execution_{execution}_constituent_methods__{constituent}.tsv"
             recs_df = pd.read_csv(path, delimiter='\t')
             recs_df = recs_df[['user', 'item', 'prediction']]
             compute_metrics_from_frames(recs_df, truth_df, constituent)
 
         # Hybrids: alinhar arquivos simples (apenas coluna de score) com um template
         # Usar BIAS como template (mesma ordenação usada na geração das predições híbridas)
-        template_path = f"data/filtered_predictions/window_{window_count}_constituent_methods__BIAS.tsv"
+        template_path = f"data/filtered_predictions/window_{window_count}_execution_{execution}_constituent_methods__BIAS.tsv"
         template_df = pd.read_csv(template_path, delimiter='\t').sort_values('user').reset_index(drop=True)
         template_df = template_df[['user', 'item']]
 
         for hybrid in hybrid_algorithms:
-            file_path = f"data/HybridPredictions/window_{window_count}_predicted{hybrid}.tsv"
+            file_path = f"data/HybridPredictions/window_{window_count}_execution_{execution}_predicted{hybrid}.tsv"
             hyb_df = pd.read_csv(file_path, delimiter='\t')
 
             # Se não houver colunas user/item, constrói usando o template
@@ -200,7 +200,7 @@ class Evaluator:
 
         # Salva CSV agregado
         os.makedirs('data/MetricsForMethods', exist_ok=True)
-        out_path = f"data/MetricsForMethods/MetricsForWindow{window_count}.csv"
+        out_path = f"data/MetricsForMethods/MetricsForWindow_{window_count}_Execution_{execution}.csv"
         out_df = pd.DataFrame(results).set_index('method')
         out_df = out_df.loc[[*constituent_algorithms, *hybrid_algorithms]]
         out_df.to_csv(out_path)

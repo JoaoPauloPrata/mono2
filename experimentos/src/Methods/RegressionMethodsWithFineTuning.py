@@ -82,7 +82,6 @@ class RegressionMethodsWithFineTuning:
                     except Exception:
                         parsed_value = value_str
                     optimized_models_params[current_model][param] = parsed_value
-
         return optimized_models_params
 
     def save_optimized_parameters(self, optimized_models, window_count):
@@ -306,13 +305,13 @@ class RegressionMethodsWithFineTuning:
         # Salva os parâmetros otimizados
         self.save_optimized_parameters(optimized_models, window_count)
 
-    def loadAndPredictWithOptimizedModels(self, window_count):
+    def loadAndPredictWithOptimizedModels(self, window_count, execution):
         # Carrega as predições base e dados de treino/teste
-        recs_from_SVD = pd.read_csv(self.relativePath +str(window_count)+ "_constituent_methods__SVD.tsv", delimiter='\t')
-        recs_from_BIAS = pd.read_csv(self.relativePath +str(window_count)+ "_constituent_methods__BIAS.tsv", delimiter='\t')
-        recs_from_userKNN = pd.read_csv(self.relativePath +str(window_count)+ "_constituent_methods__userKNN.tsv", delimiter='\t')
-        recs_from_itemKNN = pd.read_csv(self.relativePath +str(window_count)+ "_constituent_methods__itemKNN.tsv", delimiter='\t')
-        recs_from_biasedMF = pd.read_csv(self.relativePath +str(window_count)+ "_constituent_methods__BIASEDMF.tsv", delimiter='\t')
+        recs_from_SVD = pd.read_csv(self.relativePath +str(window_count)+  "_" + str(execution) + "_constituent_methods_SVD.tsv", delimiter='\t')
+        recs_from_BIAS = pd.read_csv(self.relativePath +str(window_count)+  "_" + str(execution) + "_constituent_methods_BIAS.tsv", delimiter='\t')
+        recs_from_userKNN = pd.read_csv(self.relativePath +str(window_count)+  "_" + str(execution) + "_constituent_methods_userKNN.tsv", delimiter='\t')
+        recs_from_itemKNN = pd.read_csv(self.relativePath +str(window_count)+  "_" + str(execution) + "_constituent_methods_itemKNN.tsv", delimiter='\t')
+        recs_from_biasedMF = pd.read_csv(self.relativePath +str(window_count)+  "_" + str(execution) + "_constituent_methods_BIASEDMF.tsv", delimiter='\t')
 
         recs_from_SVD = recs_from_SVD.sort_values('user')
         recs_from_BIAS = recs_from_BIAS.sort_values('user')
@@ -322,11 +321,11 @@ class RegressionMethodsWithFineTuning:
 
         scikit_test_data = pd.read_csv('data/dataSplited/processed/test_to_get_regression_train_data_' + str(window_count) + "_.csv", sep=',')
 
-        recs_from_SVD_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+ "_scikit_train__SVD.tsv", delimiter='\t')
-        recs_from_BIAS_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+ "_scikit_train__BIAS.tsv", delimiter='\t')
-        recs_from_userKNN_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+ "_scikit_train__userKNN.tsv", delimiter='\t')
-        recs_from_itemKNN_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+ "_scikit_train__itemKNN.tsv", delimiter='\t')
-        recs_from_biasedMF_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+ "_scikit_train__BIASEDMF.tsv", delimiter='\t')
+        recs_from_SVD_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+  "_" + str(execution) + "_scikit_train_SVD.tsv", delimiter='\t')
+        recs_from_BIAS_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+  "_" + str(execution) + "_scikit_train_BIAS.tsv", delimiter='\t')
+        recs_from_userKNN_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+  "_" + str(execution) + "_scikit_train_userKNN.tsv", delimiter='\t')
+        recs_from_itemKNN_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+  "_" + str(execution) + "_scikit_train_itemKNN.tsv", delimiter='\t')
+        recs_from_biasedMF_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+  "_" + str(execution) + "_scikit_train_BIASEDMF.tsv", delimiter='\t')
 
         # X para predição
         ratings_BIAS_to_use_in_prediction = recs_from_BIAS['prediction'].values
@@ -412,28 +411,28 @@ class RegressionMethodsWithFineTuning:
 
         # Salva as predições
         pd.DataFrame(predictedBayesianRidge).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedBayesianRidge.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_execution_{execution}_predictedBayesianRidge.tsv", sep='\t', index=False
         )
         pd.DataFrame(predictedTweedie).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedTweedie.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_execution_{execution}_predictedTweedie.tsv", sep='\t', index=False
         )
         pd.DataFrame(predicted).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedRidge.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_execution_{execution}_predictedRidge.tsv", sep='\t', index=False
         )
         pd.DataFrame(predictedRandomForest).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedRandomForest.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_execution_{execution}_predictedRandomForest.tsv", sep='\t', index=False
         )
         pd.DataFrame(predictedBagging).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedBagging.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_execution_{execution}_predictedBagging.tsv", sep='\t', index=False
         )
         pd.DataFrame(predictedAdaBoost).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedAdaBoost.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_execution_{execution}_predictedAdaBoost.tsv", sep='\t', index=False
         )
         pd.DataFrame(predictedGradientBoosting).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedGradientBoosting.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_execution_{execution}_predictedGradientBoosting.tsv", sep='\t', index=False
         )
         pd.DataFrame(predictedLinearSVR).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedLinearSVR.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_execution_{execution}_predictedLinearSVR.tsv", sep='\t', index=False
         )
 
         print(f"Predições (com parâmetros carregados) salvas para janela {window_count}")
@@ -466,7 +465,6 @@ class RegressionMethodsWithFineTuning:
         ratings_userKNN_to_use_in_prediction = recs_from_userKNN['prediction'].values
         ratings_itemKNN_to_use_in_prediction = recs_from_itemKNN['prediction'].values
         ratings_biasedMF_to_use_in_prediction = recs_from_biasedMF['prediction'].values
-        print(ratings_BIAS_to_use_in_prediction)
         combined_ratings = [[r, s, t, u, v] for r, s, t, u, v in zip(ratings_BIAS_to_use_in_prediction, ratings_SVD_to_use_in_prediction, ratings_userKNN_to_use_in_prediction, ratings_itemKNN_to_use_in_prediction, ratings_biasedMF_to_use_in_prediction)]
         combined_ratings = np.nan_to_num(combined_ratings)
 
