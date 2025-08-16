@@ -2,6 +2,7 @@ import pandas as pd
 from src.Methods.ConstituentMethods import ConstituentMethods 
 from src.Methods.RegressionMethods import RegressionMethods
 from src.Methods.RegressionMethodsWithFineTuning import RegressionMethodsWithFineTuning
+from src.Methods.BestRegression import BestRegression
 
 
 class Recommender:
@@ -59,6 +60,6 @@ class Recommender:
 
     # Mantido por compatibilidade: passa a usar o fluxo "após fine-tuning"
     def run_hybrid_methods(self, windows):
-        regression = RegressionMethodsWithFineTuning()
+        regression = BestRegression()
         regression.loadAndPredictWithOptimizedModels(windows)
         print("Recomendações híbridas (compat) concluídas.")
