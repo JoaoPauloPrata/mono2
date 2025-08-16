@@ -104,7 +104,7 @@ class Evaluator:
         hybrid_algorithms = ["BayesianRidge", "Tweedie", "Ridge", "RandomForest", "Bagging", "AdaBoost", "GradientBoosting", "LinearSVR"]
 
         # Carrega ground truth
-        truth_df = pd.read_csv(f"data/dataSplited/test_to_get_constituent_methods_{window_count}_.csv")
+        truth_df = pd.read_csv(f"data/windows/test_to_get_constituent_methods_{window_count}_.csv")
         truth_df = truth_df.rename(columns={"rating": "true_value"})
 
         # NDCG@k

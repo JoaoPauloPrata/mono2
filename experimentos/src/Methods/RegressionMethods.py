@@ -36,7 +36,7 @@ class RegressionMethods:
         recs_from_itemKNN = recs_from_itemKNN.sort_values('user')
         recs_from_biasedMF = recs_from_biasedMF.sort_values('user')
        
-        scikit_test_data = pd.read_csv('data/dataSplited/processed/test_to_get_regression_train_data_' + str(window_count) + "_.csv", sep=',')
+        scikit_test_data = pd.read_csv('data/windows/processed/test_to_get_regression_train_data_' + str(window_count) + "_.csv", sep=',')
 
         recs_from_SVD_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+ "_scikit_train__SVD.tsv", delimiter='\t')
         recs_from_BIAS_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+ "_scikit_train__BIAS.tsv", delimiter='\t')

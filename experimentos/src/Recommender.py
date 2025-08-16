@@ -7,14 +7,14 @@ from src.Methods.RegressionMethodsWithFineTuning import RegressionMethodsWithFin
 class Recommender:
     def __init__(self):
         pass 
-    def runRecomendations(self, train, test, window_number, execution, path):
+    def runRecomendations(self, train, test, window_number, path):
         print("Running recommendations for window " + str(window_number))
         recommender = ConstituentMethods()
-        recommender.recommenderWithItemKNN(train, test,  "window_" + str(window_number) + "_execution_" + str(execution) + "_" + str(path) + "_itemKNN.tsv" )
-        recommender.recommenderWithUserKNN(train, test,   "window_" + str(window_number) + "_execution_" + str(execution) + "_" + str(path) +"_userKNN.tsv")
-        recommender.recommenderWithSvd(train, test,   "window_" + str(window_number) + "_execution_" + str(execution) + "_" + str(path) +"_SVD.tsv")  
-        recommender.recommenderWithBiasedMF(train, test,   "window_" + str(window_number) + "_execution_" + str(execution) + "_" + str(path) +"_BIASEDMF.tsv")        
-        recommender.recommenderWithBias(train, test,   "window_" + str(window_number) + "_execution_" + str(execution) + "_" + str(path) +"_BIAS.tsv")
+        recommender.recommenderWithItemKNN(train, test,  f"window_{window_number}_{path}_itemKNN.tsv" )
+        recommender.recommenderWithUserKNN(train, test,   f"window_{window_number}_{path}_userKNN.tsv")
+        recommender.recommenderWithSvd(train, test,   f"window_{window_number}_{path}_SVD.tsv")  
+        recommender.recommenderWithBiasedMF(train, test,   f"window_{window_number}_{path}_BIASEDMF.tsv")        
+        recommender.recommenderWithBias(train, test,   f"window_{window_number}_{path}_BIAS.tsv")
 
     def runOptimization(self):
         for i in range(1, 21):  
