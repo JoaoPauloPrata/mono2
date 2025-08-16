@@ -46,8 +46,8 @@ recommender = Recommender()
 evaluator = Evaluator()
 for i in range(1, 21):
     # load_data_and_run(i)
-    recommender.run_hybrid_methods(i)
-    # evaluator.evaluateAllMetricsForAllMethods(i, j)
+    # recommender.run_hybrid_methods(i)
+    evaluator.evaluateAllMetricsForAllMethods(i)
 
 # finishExecutionTime = time.time()
 # print(f"Executions finished at {time.strftime('%Y-%m-%d %H:%M:%S')}")

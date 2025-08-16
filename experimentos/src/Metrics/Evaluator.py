@@ -11,9 +11,19 @@ class Evaluator:
         """
         Calcula o RMSE usando sklearn.
         """
-        pred_df = pd.DataFrame(predictions, columns=['user', 'item', 'prediction'])
-        true_df = pd.DataFrame(true_values, columns=['user', 'item', 'true_value'])
-        merged = pd.merge(pred_df, true_df, on=['user', 'item'])
+        # Merge para alinhar predições com valores verdadeiros
+        merged = pd.merge(predictions, true_values, on=['user', 'item'], how='inner')
+        
+        if merged.empty:
+            return None
+            
+        # Remove valores NaN se existirem
+        merged = merged.dropna(subset=['prediction', 'true_value'])
+        
+        if merged.empty:
+            return None
+        
+        # mean_squared_error espera (y_true, y_pred)
         return np.sqrt(mean_squared_error(merged['true_value'], merged['prediction']))
 
     @staticmethod
@@ -82,10 +92,18 @@ class Evaluator:
         """
         Calcula o F1 global considerando todas as previsões e valores reais.
         """
-        pred_df = pd.DataFrame(predictions, columns=['user', 'item', 'prediction'])
-        true_df = pd.DataFrame(true_values, columns=['user', 'item', 'true_value'])
+        # Merge para alinhar predições com valores verdadeiros
+        merged = pd.merge(predictions, true_values, on=['user', 'item'], how='inner')
+        
+        if merged.empty:
+            return None
+            
+        # Remove valores NaN se existirem
+        merged = merged.dropna(subset=['prediction', 'true_value'])
+        
+        if merged.empty:
+            return None
 
-        merged = pd.merge(pred_df, true_df, on=['user', 'item'], how='outer').fillna(0)
         true_labels = (merged['true_value'] >= threshold).astype(int)
         pred_labels = (merged['prediction'] >= threshold).astype(int)
 
@@ -94,17 +112,26 @@ class Evaluator:
 
     @staticmethod
     def calculate_mae(predictions, true_values):
-        pred_df = pd.DataFrame(predictions, columns=['user', 'item', 'prediction'])
-        true_df = pd.DataFrame(true_values, columns=['user', 'item', 'true_value'])
-        merged = pd.merge(pred_df, true_df, on=['user', 'item'])
+        # Merge para alinhar predições com valores verdadeiros
+        merged = pd.merge(predictions, true_values, on=['user', 'item'], how='inner')
+        
+        if merged.empty:
+            return None
+            
+        # Remove valores NaN se existirem
+        merged = merged.dropna(subset=['prediction', 'true_value'])
+        
+        if merged.empty:
+            return None
+        
         return float(np.mean(np.abs(merged['true_value'] - merged['prediction'])))
 
-    def evaluateAllMetricsForAllMethods(self, window_count, execution,  top_n=None):
+    def evaluateAllMetricsForAllMethods(self, window_count, top_n=None):
         constituent_algorithms = ["itemKNN", "BIAS", "userKNN", "SVD", "BIASEDMF"]
         hybrid_algorithms = ["BayesianRidge", "Tweedie", "Ridge", "RandomForest", "Bagging", "AdaBoost", "GradientBoosting", "LinearSVR"]
 
         # Carrega ground truth
-        truth_df = pd.read_csv(f"data/windows/test_to_get_constituent_methods_{window_count}_.csv")
+        truth_df = pd.read_csv(f"./data/windows/test_to_get_constituent_methods_{window_count}.csv")
         truth_df = truth_df.rename(columns={"rating": "true_value"})
 
         # NDCG@k
@@ -124,28 +151,39 @@ class Evaluator:
             pred_df = pred_df.reset_index(drop=True)
             truth_subset = truth_subset.reset_index(drop=True)
 
-            # Merge para RMSE/MAE
-            merged = pd.merge(pred_df, truth_subset, on=['user', 'item'])
-            if merged.empty:
-                return
-
-            rmse = float(np.sqrt(mean_squared_error(merged['true_value'], merged['prediction'])))
-            mae = float(np.mean(np.abs(merged['true_value'] - merged['prediction'])))
-
-            # NDCG por usuário
+           
+            rmse = self.calculate_rmse(pred_df,truth_subset)
+            mae = self.calculate_mae(pred_df,truth_subset)
+            # NDCG por usuário usando sklearn diretamente
             ndcgs = []
             for user_id, g in pred_df.groupby('user'):
+                # Remove NaN das predições antes de processar
+                g = g.dropna(subset=['prediction'])
+                g = g[np.isfinite(g['prediction'])]
+                
+                if g.empty:
+                    continue
+                    
                 true_user = truth_subset[truth_subset['user'] == user_id]
                 if true_user.empty:
                     continue
-                aligned = g.merge(true_user, on='item', how='left').fillna({'true_value': 0})
-                ndcgs.append(ndcg_score([aligned['true_value'].values], [aligned['prediction'].values], k=k))
+                    
+                # Merge para alinhar predições com valores verdadeiros
+                aligned = pd.merge(g[['item', 'prediction']], true_user[['item', 'true_value']], on='item', how='left').fillna({'true_value': 0})
+                
+                # Verifica se ainda há predições válidas após o merge
+                if not aligned.empty and not aligned['prediction'].isna().all():
+                    # Usa sklearn ndcg_score diretamente
+                    try:
+                        ndcg_val = ndcg_score([aligned['true_value'].values], [aligned['prediction'].values], k=k)
+                        ndcgs.append(ndcg_val)
+                    except Exception as e:
+                        print(f"Erro no cálculo NDCG para usuário {user_id}: {e}")
+                        continue
             ndcg_mean = float(np.mean(ndcgs)) if ndcgs else None
-
+            
             # F1 global (threshold fixo 3.5)
-            predictions_list = list(zip(merged['user'], merged['item'], merged['prediction']))
-            truth_list = list(zip(merged['user'], merged['item'], merged['true_value']))
-            f1 = float(Evaluator.calculate_f1_global(predictions_list, truth_list, threshold=3.5))
+            f1 = self.calculate_f1_global(pred_df, truth_subset, 3.5)
 
             results.append({
                 'method': method_name,
@@ -157,19 +195,19 @@ class Evaluator:
 
         # Constituents
         for constituent in constituent_algorithms:
-            path = f"data/filtered_predictions/window_{window_count}_execution_{execution}_constituent_methods__{constituent}.tsv"
+            path = f"./data/filtered_predictions/window_{window_count}_constituent_methods_{constituent}.tsv"
             recs_df = pd.read_csv(path, delimiter='\t')
             recs_df = recs_df[['user', 'item', 'prediction']]
             compute_metrics_from_frames(recs_df, truth_df, constituent)
 
         # Hybrids: alinhar arquivos simples (apenas coluna de score) com um template
         # Usar BIAS como template (mesma ordenação usada na geração das predições híbridas)
-        template_path = f"data/filtered_predictions/window_{window_count}_execution_{execution}_constituent_methods__BIAS.tsv"
+        template_path = f"./data/filtered_predictions/window_{window_count}_constituent_methods_BIAS.tsv"
         template_df = pd.read_csv(template_path, delimiter='\t').sort_values('user').reset_index(drop=True)
         template_df = template_df[['user', 'item']]
 
         for hybrid in hybrid_algorithms:
-            file_path = f"data/HybridPredictions/window_{window_count}_execution_{execution}_predicted{hybrid}.tsv"
+            file_path = f"./data/HybridPredictions/window_{window_count}_predicted{hybrid}.tsv"
             hyb_df = pd.read_csv(file_path, delimiter='\t')
 
             # Se não houver colunas user/item, constrói usando o template
@@ -199,9 +237,9 @@ class Evaluator:
             compute_metrics_from_frames(pred_df, truth_df, hybrid)
 
         # Salva CSV agregado
-        os.makedirs('data/MetricsForMethods', exist_ok=True)
-        out_path = f"data/MetricsForMethods/MetricsForWindow_{window_count}_Execution_{execution}.csv"
-        out_df = pd.DataFrame(results).set_index('method')
+        os.makedirs('./data/MetricsForMethods', exist_ok=True)
+        out_path = f"./data/MetricsForMethods/MetricsForWindow{window_count}.csv"
+        out_df = pd.DataFrame(results).set_index('method')        
         out_df = out_df.loc[[*constituent_algorithms, *hybrid_algorithms]]
         out_df.to_csv(out_path)
         print(f"Métricas salvas em: {out_path}")

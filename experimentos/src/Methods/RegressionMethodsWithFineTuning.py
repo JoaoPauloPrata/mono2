@@ -195,7 +195,7 @@ class RegressionMethodsWithFineTuning:
                 X_fit, y_fit = X_train[idx], y_train[idx]
 
             # E reduza o esforço do RF especificamente:
-            n_iter = 8 if model_name == 'RandomForest' else 15
+            n_iter = 8 if model_name == 'RandomForest' else 40
             cv = 2 if model_name == 'RandomForest' else 3
 
             random_search = RandomizedSearchCV(
@@ -304,7 +304,7 @@ class RegressionMethodsWithFineTuning:
     #     # Salva os parâmetros otimizados
     #     self.save_optimized_parameters(optimized_models, window_count)
 
-    def loadAndPredictWithOptimizedModels(self, window_count, execution):
+    def loadAndPredictWithOptimizedModels(self, window_count):
         # Carrega as predições base e dados de treino/teste
         recs_from_SVD = pd.read_csv(f"data/filtered_predictions/window_{window_count}_constituent_methods_SVD.tsv", delimiter='\t')
         recs_from_BIAS = pd.read_csv(f"data/filtered_predictions/window_{window_count}_constituent_methods_BIAS.tsv", delimiter='\t')
@@ -364,38 +364,51 @@ class RegressionMethodsWithFineTuning:
         loaded_params = self.load_parameters(window_count)
         if loaded_params is None:
             print("Parâmetros não encontrados. Executando otimização completa...")
-            return self.loadAndPredict(window_count)
+            # Executa otimização e salva os parâmetros
+            print("Iniciando otimização de parâmetros...")
+            optimized_models = self.optimize_models(combined_ratings_train_scaled, original_ratings_scikit)
+            self.save_optimized_parameters(optimized_models, window_count)
+            
+            # Atualiza os modelos com as versões otimizadas
+            self.regBayesianRidge = optimized_models['BayesianRidge']
+            self.regRidge = optimized_models['Ridge']
+            self.regTweedie = optimized_models['Tweedie']
+            self.regRandomForest = optimized_models['RandomForest']
+            self.regBagging = optimized_models['Bagging']
+            self.regAdaBoost = optimized_models['AdaBoost']
+            self.regGradientBoosting = optimized_models['GradientBoosting']
+            self.regLinearSVR = optimized_models['LinearSVR']
+        else:
+            # Aplica hiperparâmetros carregados
+            self.initialize_base_models()
+            
+            model_attr_map = {
+                'BayesianRidge': 'regBayesianRidge',
+                'Ridge': 'regRidge',
+                'Tweedie': 'regTweedie',
+                'RandomForest': 'regRandomForest',
+                'Bagging': 'regBagging',
+                'AdaBoost': 'regAdaBoost',
+                'GradientBoosting': 'regGradientBoosting',
+                'LinearSVR': 'regLinearSVR',
+            }
 
-        # (Re)inicializa modelos base e aplica hiperparâmetros
-        self.initialize_base_models()
+            for model_name, attr_name in model_attr_map.items():
+                if model_name in loaded_params:
+                    try:
+                        getattr(self, attr_name).set_params(**loaded_params[model_name])
+                    except ValueError as e:
+                        print(f"Aviso: não foi possível aplicar todos os parâmetros de {model_name}: {e}")
 
-        model_attr_map = {
-            'BayesianRidge': 'regBayesianRidge',
-            'Ridge': 'regRidge',
-            'Tweedie': 'regTweedie',
-            'RandomForest': 'regRandomForest',
-            'Bagging': 'regBagging',
-            'AdaBoost': 'regAdaBoost',
-            'GradientBoosting': 'regGradientBoosting',
-            'LinearSVR': 'regLinearSVR',
-        }
-
-        for model_name, attr_name in model_attr_map.items():
-            if model_name in loaded_params:
-                try:
-                    getattr(self, attr_name).set_params(**loaded_params[model_name])
-                except ValueError as e:
-                    print(f"Aviso: não foi possível aplicar todos os parâmetros de {model_name}: {e}")
-
-        # Refit dos modelos com os hiperparâmetros carregados
-        self.regBayesianRidge.fit(combined_ratings_train_scaled, original_ratings_scikit)
-        self.regRidge.fit(combined_ratings_train_scaled, original_ratings_scikit)
-        self.regTweedie.fit(combined_ratings_train_scaled, original_ratings_scikit)
-        self.regRandomForest.fit(combined_ratings_train_scaled, original_ratings_scikit)
-        self.regBagging.fit(combined_ratings_train_scaled, original_ratings_scikit)
-        self.regAdaBoost.fit(combined_ratings_train_scaled, original_ratings_scikit)
-        self.regGradientBoosting.fit(combined_ratings_train_scaled, original_ratings_scikit)
-        self.regLinearSVR.fit(combined_ratings_train_scaled, original_ratings_scikit)
+            # Refit dos modelos com os hiperparâmetros carregados
+            self.regBayesianRidge.fit(combined_ratings_train_scaled, original_ratings_scikit)
+            self.regRidge.fit(combined_ratings_train_scaled, original_ratings_scikit)
+            self.regTweedie.fit(combined_ratings_train_scaled, original_ratings_scikit)
+            self.regRandomForest.fit(combined_ratings_train_scaled, original_ratings_scikit)
+            self.regBagging.fit(combined_ratings_train_scaled, original_ratings_scikit)
+            self.regAdaBoost.fit(combined_ratings_train_scaled, original_ratings_scikit)
+            self.regGradientBoosting.fit(combined_ratings_train_scaled, original_ratings_scikit)
+            self.regLinearSVR.fit(combined_ratings_train_scaled, original_ratings_scikit)
 
         # Predição com dados na mesma escala
         predictedBayesianRidge = self.regBayesianRidge.predict(combined_ratings_scaled)
@@ -436,97 +449,4 @@ class RegressionMethodsWithFineTuning:
         print(f"Predições (com parâmetros carregados) salvas para janela {window_count}")
 
 
-    def loadAndPredict(self, window_count):
-        recs_from_SVD = pd.read_csv(self.relativePath +str(window_count)+ "_constituent_methods__SVD.tsv", delimiter='\t')
-        recs_from_BIAS = pd.read_csv(self.relativePath +str(window_count)+ "_constituent_methods__BIAS.tsv", delimiter='\t')
-        recs_from_userKNN = pd.read_csv(self.relativePath +str(window_count)+ "_constituent_methods__userKNN.tsv", delimiter='\t')
-        recs_from_itemKNN = pd.read_csv(self.relativePath +str(window_count)+ "_constituent_methods__itemKNN.tsv", delimiter='\t')
-        recs_from_biasedMF = pd.read_csv(self.relativePath +str(window_count)+ "_constituent_methods__BIASEDMF.tsv", delimiter='\t')
-        columns = ['user', 'item', 'prediction']
-        recs_from_SVD = recs_from_SVD.sort_values('user')
-        recs_from_BIAS = recs_from_BIAS.sort_values('user')
-        recs_from_userKNN = recs_from_userKNN.sort_values('user')
-        recs_from_itemKNN = recs_from_itemKNN.sort_values('user')
-        recs_from_biasedMF = recs_from_biasedMF.sort_values('user')
-       
-        scikit_test_data = pd.read_csv('data/windows/processed/test_to_get_regression_train_data_' + str(window_count) + "_.csv", sep=',')
-
-        recs_from_SVD_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+ "_scikit_train__SVD.tsv", delimiter='\t')
-        recs_from_BIAS_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+ "_scikit_train__BIAS.tsv", delimiter='\t')
-        recs_from_userKNN_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+ "_scikit_train__userKNN.tsv", delimiter='\t')
-        recs_from_itemKNN_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+ "_scikit_train__itemKNN.tsv", delimiter='\t')
-        recs_from_biasedMF_to_train_scikit = pd.read_csv(self.relativePath +str(window_count)+ "_scikit_train__BIASEDMF.tsv", delimiter='\t')
-
-        
-        ratings_BIAS_to_use_in_prediction = recs_from_BIAS['prediction'].values
-        ratings_SVD_to_use_in_prediction = recs_from_SVD['prediction'].values
-        ratings_userKNN_to_use_in_prediction = recs_from_userKNN['prediction'].values
-        ratings_itemKNN_to_use_in_prediction = recs_from_itemKNN['prediction'].values
-        ratings_biasedMF_to_use_in_prediction = recs_from_biasedMF['prediction'].values
-        combined_ratings = [[r, s, t, u, v] for r, s, t, u, v in zip(ratings_BIAS_to_use_in_prediction, ratings_SVD_to_use_in_prediction, ratings_userKNN_to_use_in_prediction, ratings_itemKNN_to_use_in_prediction, ratings_biasedMF_to_use_in_prediction)]
-        combined_ratings = np.nan_to_num(combined_ratings)
-
-        ratings_BIAS_to_use_in_train = recs_from_BIAS_to_train_scikit['prediction'].values
-        ratings_SVD_to_use_in_train = recs_from_SVD_to_train_scikit['prediction'].values
-        ratings_userKNN_to_use_in_train = recs_from_userKNN_to_train_scikit['prediction'].values
-        ratings_itemKNN_to_use_in_train = recs_from_itemKNN_to_train_scikit['prediction'].values
-        ratings_biasedMF_to_use_in_train = recs_from_biasedMF_to_train_scikit['prediction'].values
-        
-        # Adicionando a linha que estava faltando
-        original_ratings_scikit = scikit_test_data['rating'].values
-        
-        cobined_ratings_train = [[r, s, t, u, v] for r, s,t,u,v in zip(ratings_BIAS_to_use_in_train, ratings_SVD_to_use_in_train, ratings_userKNN_to_use_in_train, ratings_itemKNN_to_use_in_train, ratings_biasedMF_to_use_in_train)]
-        cobined_ratings_train = np.nan_to_num(cobined_ratings_train)
-
-        # Prepara os dados para otimização
-        combined_ratings_train = self.preprocess_data(cobined_ratings_train)
-        
-        # Otimiza os modelos
-        print("Iniciando otimização de parâmetros...")
-        optimized_models = self.optimize_models(combined_ratings_train, original_ratings_scikit)
-        
-        # Salva os parâmetros otimizados
-        self.save_optimized_parameters(optimized_models, window_count)
-        
-        # Atualiza os modelos com as versões otimizadas
-        self.regBayesianRidge = optimized_models['BayesianRidge']
-        self.regRidge = optimized_models['Ridge']
-        self.regTweedie = optimized_models['Tweedie']
-        self.regRandomForest = optimized_models['RandomForest']
-        self.regBagging = optimized_models['Bagging']
-        self.regAdaBoost = optimized_models['AdaBoost']
-        self.regGradientBoosting = optimized_models['GradientBoosting']
-        self.regLinearSVR = optimized_models['LinearSVR']
-
-        # Faz as predições usando os modelos otimizados (aplicando a MESMA escala)
-        print("Fazendo predições com modelos otimizados...")
-        combined_ratings_scaled = np.nan_to_num(self.scaler.transform(combined_ratings))
-        predictedBayesianRidge = self.regBayesianRidge.predict(combined_ratings_scaled)
-        predictedTweedie = self.regTweedie.predict(combined_ratings_scaled)
-        predicted = self.regRidge.predict(combined_ratings_scaled)
-        predictedRandomForest = self.regRandomForest.predict(combined_ratings_scaled)
-        predictedBagging = self.regBagging.predict(combined_ratings_scaled)
-        predictedAdaBoost = self.regAdaBoost.predict(combined_ratings_scaled)
-        predictedGradientBoosting = self.regGradientBoosting.predict(combined_ratings_scaled)
-        predictedLinearSVR = self.regLinearSVR.predict(combined_ratings_scaled)
-        
-        # Salva as predições
-        predictedBayesianRidge = pd.DataFrame(predictedBayesianRidge)   
-        predictedBayesianRidge.to_csv("data/HybridPredictions/window_"+str(window_count)+"_predictedBayesianRidge.tsv", sep='\t', index=False)
-        predictedTweedie = pd.DataFrame(predictedTweedie)
-        predictedTweedie.to_csv("data/HybridPredictions/window_"+str(window_count)+"_predictedTweedie.tsv", sep='\t', index=False)
-        predicted = pd.DataFrame(predicted)
-        predicted.to_csv("data/HybridPredictions/window_"+str(window_count)+"_predictedRidge.tsv", sep='\t', index=False)
-        predictedRandomForest = pd.DataFrame(predictedRandomForest)
-        predictedRandomForest.to_csv("data/HybridPredictions/window_"+str(window_count)+"_predictedRandomForest.tsv", sep='\t', index=False)
-        predictedBagging = pd.DataFrame(predictedBagging)
-        predictedBagging.to_csv("data/HybridPredictions/window_"+str(window_count)+"_predictedBagging.tsv", sep='\t', index=False)
-        predictedAdaBoost = pd.DataFrame(predictedAdaBoost)
-        predictedAdaBoost.to_csv("data/HybridPredictions/window_"+str(window_count)+"_predictedAdaBoost.tsv", sep='\t', index=False)
-        predictedGradientBoosting = pd.DataFrame(predictedGradientBoosting)
-        predictedGradientBoosting.to_csv("data/HybridPredictions/window_"+str(window_count)+"_predictedGradientBoosting.tsv", sep='\t', index=False)
-        predictedLinearSVR = pd.DataFrame(predictedLinearSVR)
-        predictedLinearSVR.to_csv("data/HybridPredictions/window_"+str(window_count)+"_predictedLinearSVR.tsv", sep='\t', index=False)
-
-        print(f"Predições salvas para janela {window_count}")
 

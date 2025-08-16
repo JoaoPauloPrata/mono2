@@ -128,16 +128,78 @@ def filter_to_common_pairs_by_window_and_type():
             print(f"Janela {window}, tipo {file_type}: {len(common_pairs)} pares comuns mantidos")
 
 def add_header_to_hybrid():
+    """
+    Adiciona header e colunas user/item aos arquivos de predições híbridas
+    usando os pares user/item dos arquivos filtered_predictions
+    """
     algo = ["BayesianRidge", "Tweedie", "Ridge", "RandomForest", "Bagging", "AdaBoost", "GradientBoosting", "LinearSVR"]
-    filtered_dir = "data/filtered_predictions"
-    for file_name in os.listdir(filtered_dir):
-        if file_name.endswith('.tsv'):
-            filePath = os.path.join(filtered_dir, file_name)
-            df = pd.read_csv(filePath, delimiter='\t', header=None, names=['user', 'item', 'prediction'])
-            df.to_csv(filePath, sep='\t', index=False)
+    hybrid_dir = "../../data/HybridPredictions"
+    filtered_dir = "../../data/filtered_predictions"
+    
+    # Busca todas as janelas disponíveis nos arquivos híbridos
+    windows = set()
+    for file_name in os.listdir(hybrid_dir):
+        if file_name.startswith('window_') and file_name.endswith('.tsv'):
+            # Extrai número da janela
+            parts = file_name.split('_')
+            if len(parts) >= 2:
+                window_num = parts[1]
+                try:
+                    windows.add(int(window_num))
+                except ValueError:
+                    continue
+    
+    windows = sorted(windows)
+    print(f"Janelas encontradas para correção: {windows}")
+    
+    for window in windows:
+        print(f"\nProcessando janela {window}...")
+        
+        # Carrega o arquivo de referência para obter pares user/item
+        reference_file = os.path.join(filtered_dir, f"window_{window}_constituent_methods_BIAS.tsv")
+        
+        if not os.path.exists(reference_file):
+            print(f"Arquivo de referência não encontrado: {reference_file}")
+            continue
+            
+        # Carrega pares user/item do arquivo de referência
+        reference_df = pd.read_csv(reference_file, sep='\t')
+        user_item_pairs = reference_df[['user', 'item']].copy()
+        
+        print(f"  Pares user/item carregados: {len(user_item_pairs)}")
+        
+        # Processa cada algoritmo híbrido
+        for method in algo:
+            hybrid_file = os.path.join(hybrid_dir, f"window_{window}_predicted{method}.tsv")
+            
+            if not os.path.exists(hybrid_file):
+                print(f"  Arquivo híbrido não encontrado: {hybrid_file}")
+                continue
+            
+            # Carrega predições híbridas (apenas valores) - pula a primeira linha (linha com "0")
+            predictions_df = pd.read_csv(hybrid_file, sep='\t', header=None, names=['prediction'], skiprows=1)
+            
+            print(f"  {method}: {len(predictions_df)} predições -> ", end="")
+            
+            # Verifica se o número de predições coincide com os pares
+            if len(predictions_df) != len(user_item_pairs):
+                print(f"ERRO: {len(predictions_df)} predições != {len(user_item_pairs)} pares!")
+                continue
+            
+            # Combina pares user/item com predições
+            final_df = user_item_pairs.copy()
+            final_df['prediction'] = predictions_df['prediction'].values
+            
+            # Salva arquivo corrigido
+            final_df.to_csv(hybrid_file, sep='\t', index=False)
+            print(f"corrigido com header")
+        
+        print(f"Janela {window} processada com sucesso!")
+    
+    print("\nTodos os arquivos híbridos foram corrigidos!")
 
 # Executa o filtro
 if __name__ == "__main__":
-    print("Iniciando filtragem de pares comuns...")
-    filter_to_common_pairs_by_window_and_type()
-    print("Filtragem concluída!")
+    print("Iniciando correção de headers dos arquivos híbridos...")
+    add_header_to_hybrid()
+    print("Correção concluída!")

@@ -58,7 +58,7 @@ class Recommender:
         print("Recomendações sem fine-tuning concluídas.")
 
     # Mantido por compatibilidade: passa a usar o fluxo "após fine-tuning"
-    def run_hybrid_methods(self, windows, execution):
+    def run_hybrid_methods(self, windows):
         regression = RegressionMethodsWithFineTuning()
-        regression.loadAndPredictWithOptimizedModels(windows, execution)
+        regression.loadAndPredictWithOptimizedModels(windows)
         print("Recomendações híbridas (compat) concluídas.")
