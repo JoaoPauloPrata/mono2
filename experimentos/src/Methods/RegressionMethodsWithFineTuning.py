@@ -195,8 +195,8 @@ class RegressionMethodsWithFineTuning:
                 X_fit, y_fit = X_train[idx], y_train[idx]
 
             # E reduza o esforço do RF especificamente:
-            n_iter = 8 if model_name == 'RandomForest' else 40
-            cv = 2 if model_name == 'RandomForest' else 3
+            n_iter = 8 if model_name == 'RandomForest' else 30
+            cv = 2 if model_name == 'RandomForest' else 5
 
             random_search = RandomizedSearchCV(
                 estimator=base_model,
@@ -317,14 +317,16 @@ class RegressionMethodsWithFineTuning:
         recs_from_itemKNN = recs_from_itemKNN.sort_values('user')
         recs_from_biasedMF = recs_from_biasedMF.sort_values('user')
 
-        scikit_test_data = pd.read_csv(f'data/windows/test_to_get_regression_train_data_{window_count}.csv', sep=',')
+        scikit_test_data = pd.read_csv(f'data/windows/processed/test_to_get_regression_train_data_{window_count}_filtered.csv', sep=',')
 
         recs_from_SVD_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_scikit_train_SVD.tsv", delimiter='\t')
         recs_from_BIAS_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_scikit_train_BIAS.tsv", delimiter='\t')
         recs_from_userKNN_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_scikit_train_userKNN.tsv", delimiter='\t')
         recs_from_itemKNN_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_scikit_train_itemKNN.tsv", delimiter='\t')
         recs_from_biasedMF_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_scikit_train_BIASEDMF.tsv", delimiter='\t')
+        
 
+        print(f"Filtered scikit_test_data: {len(scikit_test_data)} linhas (mantém apenas pares com predições)")
         # X para predição
         ratings_BIAS_to_use_in_prediction = recs_from_BIAS['prediction'].values
         ratings_SVD_to_use_in_prediction = recs_from_SVD['prediction'].values

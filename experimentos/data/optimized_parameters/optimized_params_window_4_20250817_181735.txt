@@ -1,0 +1,118 @@
+BayesianRidge:
+------------------------------
+  alpha_1: 7.5732011013738095e-06
+  alpha_2: 5.496921323890798e-06
+  alpha_init: None
+  compute_score: False
+  copy_X: True
+  fit_intercept: True
+  lambda_1: 5.967511656638482e-06
+  lambda_2: 9.752553072641381e-06
+  lambda_init: None
+  max_iter: 387
+  tol: 0.001
+  verbose: False
+
+Ridge:
+------------------------------
+  alpha: 2.084423118582435
+  copy_X: True
+  fit_intercept: True
+  max_iter: 1684
+  positive: False
+  random_state: None
+  solver: lsqr
+  tol: 0.0001
+
+Tweedie:
+------------------------------
+  alpha: 0.11413261043943482
+  fit_intercept: True
+  link: auto
+  max_iter: 1356
+  power: 1.5824582803960838
+  solver: lbfgs
+  tol: 0.0001
+  verbose: 0
+  warm_start: False
+
+RandomForest:
+------------------------------
+  bootstrap: True
+  ccp_alpha: 0.0
+  criterion: squared_error
+  max_depth: 7
+  max_features: sqrt
+  max_leaf_nodes: None
+  max_samples: None
+  min_impurity_decrease: 0.0
+  min_samples_leaf: 2
+  min_samples_split: 4
+  min_weight_fraction_leaf: 0.0
+  monotonic_cst: None
+  n_estimators: 136
+  n_jobs: -1
+  oob_score: False
+  random_state: None
+  verbose: 0
+  warm_start: False
+
+Bagging:
+------------------------------
+  bootstrap: True
+  bootstrap_features: False
+  estimator: None
+  max_features: 0.8861223846483287
+  max_samples: 0.5993578407670862
+  n_estimators: 97
+  n_jobs: -1
+  oob_score: False
+  random_state: None
+  verbose: 0
+  warm_start: False
+
+AdaBoost:
+------------------------------
+  estimator: None
+  learning_rate: 0.0155221171236024
+  loss: exponential
+  n_estimators: 130
+  random_state: None
+
+GradientBoosting:
+------------------------------
+  alpha: 0.9
+  ccp_alpha: 0.0
+  criterion: friedman_mse
+  init: None
+  learning_rate: 0.06879485872574355
+  loss: squared_error
+  max_depth: 3
+  max_features: None
+  max_leaf_nodes: None
+  min_impurity_decrease: 0.0
+  min_samples_leaf: 1
+  min_samples_split: 7
+  min_weight_fraction_leaf: 0.0
+  n_estimators: 89
+  n_iter_no_change: None
+  random_state: None
+  subsample: 0.9378135394712606
+  tol: 0.0001
+  validation_fraction: 0.1
+  verbose: 0
+  warm_start: False
+
+LinearSVR:
+------------------------------
+  C: 0.46970891105105406
+  dual: auto
+  epsilon: 0.4847923138822793
+  fit_intercept: True
+  intercept_scaling: 1.0
+  loss: epsilon_insensitive
+  max_iter: 3777
+  random_state: None
+  tol: 0.0004597541333697657
+  verbose: 0
+

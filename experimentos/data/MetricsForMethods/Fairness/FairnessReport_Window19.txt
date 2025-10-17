@@ -1,0 +1,23 @@
+RELATÓRIO DE FAIRNESS - JANELA 19
+================================================================================
+
+RMSE:
+   Métodos Simples  - Média: 0.013681 (5 métodos)
+   Métodos Híbridos - Média: 0.013031 (8 métodos)
+   MELHORIA: 0.000649
+
+MAE:
+   Métodos Simples  - Média: 0.018744 (5 métodos)
+   Métodos Híbridos - Média: 0.017816 (8 métodos)
+   MELHORIA: 0.000928
+
+NDCG:
+   Métodos Simples  - Média: 0.008455 (5 métodos)
+   Métodos Híbridos - Média: 0.007476 (8 métodos)
+   MELHORIA: 0.000979
+
+F1:
+   Métodos Simples  - Média: 0.018294 (5 métodos)
+   Métodos Híbridos - Média: 0.005200 (8 métodos)
+   MELHORIA: 0.013094
+

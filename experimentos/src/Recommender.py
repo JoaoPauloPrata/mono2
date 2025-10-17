@@ -1,8 +1,6 @@
 import pandas as pd
 from src.Methods.ConstituentMethods import ConstituentMethods 
-from src.Methods.RegressionMethods import RegressionMethods
 from src.Methods.RegressionMethodsWithFineTuning import RegressionMethodsWithFineTuning
-from src.Methods.BestRegression import BestRegression
 
 
 class Recommender:
@@ -49,17 +47,8 @@ class Recommender:
             regression.loadAndPredictWithOptimizedModels(i)
         print("Recomendações híbridas (após fine-tuning) concluídas.")
 
-    def run_hybrid_methods_without_finetuning(self, windows=None):
-        """
-        Realiza recomendações com os métodos sem fine-tuning (parâmetros padrão/estáticos).
-        """
-        for i in self._normalize_windows(windows):
-            regression = RegressionMethods()
-            regression.loadAndPredict(i)
-        print("Recomendações sem fine-tuning concluídas.")
-
     # Mantido por compatibilidade: passa a usar o fluxo "após fine-tuning"
     def run_hybrid_methods(self, windows):
-        regression = BestRegression()
+        regression = RegressionMethodsWithFineTuning()
         regression.loadAndPredictWithOptimizedModels(windows)
         print("Recomendações híbridas (compat) concluídas.")

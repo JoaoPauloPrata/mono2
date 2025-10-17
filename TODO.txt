@@ -1,0 +1,20 @@
+Descrever o setup experimental
+
+Revisitar a literatura para encontrar artigos relacionados mais rescentes
+
+Buscar mais pontos de vista:
+
+    Quantidade de ratings
+        Analisar a quantidade de ratings em treinamento para dividir os users em 3 grupos.
+        Definir os limiares de cortes:
+            - Histograma
+
+    Valores de ratings
+        Tentar dividir os usuarios pelo perfil de avaliação (os que avaliam todos os itens/que avaliam só os interessantes)
+            - usar media, mediana ou contagem
+        
+    Utilizar metodos de agrupamento para classificar os usuários.
+        - Descobrir qual seria a quantidade de grupos ideal ou fixar o valor
+
+    Agrupar por resultado des metricas por usuários
+        - Usuários bem atendidos/mal atendidos
