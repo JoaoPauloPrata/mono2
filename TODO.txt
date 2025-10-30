@@ -18,3 +18,9 @@ Buscar mais pontos de vista:
 
     Agrupar por resultado des metricas por usuários
         - Usuários bem atendidos/mal atendidos
+
+
+artigos
+    https://ar5iv.labs.arxiv.org/html/2010.11060#:~:text=issue%20in%20recommender%20system%20offline,conducted%20with%20four%20widely%20used
+    https://arxiv.org/pdf/1802.08452#:~:text=randomly%20assign%20events%20to%20the,52
+    
