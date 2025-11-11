@@ -1,6 +1,6 @@
 Descrever o setup experimental
 
-Revisitar a literatura para encontrar artigos relacionados mais rescentes
+Revisitar a literatura para encontrar artigos relacionados mais recentes
 
 Buscar mais pontos de vista:
 
@@ -12,6 +12,9 @@ Buscar mais pontos de vista:
     Valores de ratings
         Tentar dividir os usuarios pelo perfil de avaliação (os que avaliam todos os itens/que avaliam só os interessantes)
             - usar media, mediana ou contagem
+            - dividir por 1/3
+            - metodos de agrupamento
+        
         
     Utilizar metodos de agrupamento para classificar os usuários.
         - Descobrir qual seria a quantidade de grupos ideal ou fixar o valor
@@ -19,6 +22,8 @@ Buscar mais pontos de vista:
     Agrupar por resultado des metricas por usuários
         - Usuários bem atendidos/mal atendidos
 
+
+MEDIA E INTERVALO DE CONFIANÇA 
 
 artigos
     https://ar5iv.labs.arxiv.org/html/2010.11060#:~:text=issue%20in%20recommender%20system%20offline,conducted%20with%20four%20widely%20used

@@ -36,17 +36,27 @@ def load_data_and_run(count):
     recommend.runRecomendations(train_to_get_constituent_methods, test_to_get_constituent_methods, count, "constituent_methods")
 
 
-
-
+def split_full_windows():
+    datapath = "./data/ml-1m/"
+    ratings_cols = ['user', 'item', 'rating', 'timestamp']
+    ratings = pd.read_csv(datapath + 'ratings.dat', sep='::', names=ratings_cols, engine='python', encoding='latin-1')
+    spliter = TimePeriodSpliter(sliding_window_size=15, step_size=1, dataset=ratings)
+    count = 1
+    time_window = spliter.get_window(count)
+    while(not time_window.empty):
+        full_window = spliter.get_partial_data(time_window, 0, 15)
+        full_window.to_csv("./data/windows/full/window_"+ str(count) + ".csv", index = False)
+        count += 1
+        time_window = spliter.get_window(count)
 
 # split_data()
 
-startExecutionTime = time.time()
-recommender = Recommender()
-evaluator = Evaluator()
-for i in range(1, 21):
+# startExecutionTime = time.time()
+# recommender = Recommender()
+# evaluator = Evaluator()
+# for i in range(1, 21):
     # load_data_and_run(i)
-    recommender.run_hybrid_methods(i)
+    # recommender.run_hybrid_methods(i)
     # evaluator.evaluateAllMetricsForAllMethods(i)
 
 # finishExecutionTime = time.time()
@@ -54,3 +64,5 @@ for i in range(1, 21):
 # print(f"Total execution time: {finishExecutionTime - startExecutionTime} seconds")
 # load_data_and_run(1, 1)
 # load_data_and_run(1)
+
+split_data()

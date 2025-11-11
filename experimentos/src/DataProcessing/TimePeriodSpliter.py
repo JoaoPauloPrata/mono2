@@ -14,7 +14,9 @@ class TimePeriodSpliter:
         start_date = self.min_date + pd.DateOffset(months=(window_number - 1) * self.step_size)
         # Calcular a data de término da janela
         end_date = start_date + pd.DateOffset(months=self.sliding_window_size)
-
+        
+        print(start_date)
+        print(end_date)
         # Verificar se a diferença entre end_date e start_date é menor que o tamanho da janela deslizante
         if (end_date > self.max_date):
             return pd.DataFrame()
@@ -28,10 +30,11 @@ class TimePeriodSpliter:
         start_date = first_window_date + pd.DateOffset(months=start_month)
         end_date = start_date + pd.DateOffset(months=distance_between_start)
         partial_data = self.dataset[(self.dataset['date'] >= start_date) & (self.dataset['date'] < end_date)]
-        print(partial_data.head())  
         return partial_data
     
-
+    def ShowMaxMin(self):
+        print(self.max_date)
+        print(self.min_date)
 
     #TODO boxplot para cada cor
     #TODO tirar meses inclomentos
