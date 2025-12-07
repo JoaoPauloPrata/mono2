@@ -1,7 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
 base_path = "./data/windows/train_to_get_regression_train_data_"
 
 def plot_user_rating_count_distribution(ratings: pd.DataFrame):

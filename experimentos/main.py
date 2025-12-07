@@ -49,15 +49,15 @@ def split_full_windows():
         count += 1
         time_window = spliter.get_window(count)
 
-# split_data()
+split_data()
 
-# startExecutionTime = time.time()
-# recommender = Recommender()
-# evaluator = Evaluator()
-# for i in range(1, 21):
-    # load_data_and_run(i)
-    # recommender.run_hybrid_methods(i)
-    # evaluator.evaluateAllMetricsForAllMethods(i)
+startExecutionTime = time.time()
+recommender = Recommender()
+evaluator = Evaluator()
+for i in range(1, 21):
+    load_data_and_run(i)
+    recommender.run_hybrid_methods(i)
+    evaluator.evaluateAllMetricsForAllMethods(i)
 
 # finishExecutionTime = time.time()
 # print(f"Executions finished at {time.strftime('%Y-%m-%d %H:%M:%S')}")
