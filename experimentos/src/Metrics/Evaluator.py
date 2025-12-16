@@ -15,12 +15,14 @@ class Evaluator:
         merged = pd.merge(predictions, true_values, on=['user', 'item'], how='inner')
         
         if merged.empty:
+            print("Merged dataframe is empty in RMSE calculation.")
             return None
             
         # Remove valores NaN se existirem
         merged = merged.dropna(subset=['prediction', 'true_value'])
         
         if merged.empty:
+            print("Merged dataframe is empty after dropping NaNs in RMSE calculation.")
             return None
         
         # mean_squared_error espera (y_true, y_pred)
@@ -62,6 +64,46 @@ class Evaluator:
         pred_scores = merged['prediction'].values
 
         return ndcg_score([true_relevance], [pred_scores], k=k)
+
+    @staticmethod
+    def compute_ndcg(pred_df: pd.DataFrame, truth_subset: pd.DataFrame, k: int):
+            # Filtra usuários com pelo menos 5 itens
+            pred_df = pred_df.groupby('user').filter(lambda x: len(x) >= 5)
+            truth_subset = truth_subset[truth_subset['user'].isin(pred_df['user'])]
+
+            if pred_df.empty or truth_subset.empty:
+                return
+
+            pred_df = pred_df.reset_index(drop=True)
+            truth_subset = truth_subset.reset_index(drop=True)
+          
+            ndcgs = []
+            for user_id, g in pred_df.groupby('user'):
+                # Remove NaN das predições antes de processar
+                g = g.dropna(subset=['prediction'])
+                g = g[np.isfinite(g['prediction'])]
+                
+                if g.empty:
+                    continue
+                    
+                true_user = truth_subset[truth_subset['user'] == user_id]
+                if true_user.empty:
+                    continue
+                    
+                # Merge para alinhar predições com valores verdadeiros
+                aligned = pd.merge(g[['item', 'prediction']], true_user[['item', 'true_value']], on='item', how='left').fillna({'true_value': 0})
+                
+                # Verifica se ainda há predições válidas após o merge
+                if not aligned.empty and not aligned['prediction'].isna().all():
+                    # Usa sklearn ndcg_score diretamente
+                    try:
+                        ndcg_val = ndcg_score([aligned['true_value'].values], [aligned['prediction'].values], k=k)
+                        ndcgs.append(ndcg_val)
+                    except Exception as e:
+                        print(f"Erro no cálculo NDCG para usuário {user_id}: {e}")
+                        continue
+            ndcg_mean = float(np.mean(ndcgs)) if ndcgs else None
+            return ndcg_mean
 
     @staticmethod
     def calculate_f1_user(predictions, true_values, threshold):
