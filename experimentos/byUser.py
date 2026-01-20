@@ -54,28 +54,28 @@ class UserMetricsByRating:
         output_path = output_path.rstrip("/\\")
        
     
-        # for algorithm in constituent_algorithms:
-        #     for windowCount in range(1, 21):
-        #         output_dir_constituent = f"{output_path}/constituent/window_{windowCount}/{algorithm}.csv"
-        #         df_pred_path = f"./data/filtered_predictions/window_{windowCount}_constituent_methods_{algorithm}.tsv"
-        #         truth_file_path = f"./data/windows/test_to_get_constituent_methods_{windowCount}.csv"
-        #         df_pred = pd.read_csv(df_pred_path, sep="\t")
-        #         df_pred = self.drop_users_with_less_than_n_ratings(df_pred, 5)
-        #         userList = self.split_in_users(df_pred)
-        #         truth_file = pd.read_csv(truth_file_path)
-        #         results = []
+        for algorithm in constituent_algorithms:
+            for windowCount in range(1, 21):
+                output_dir_constituent = f"{output_path}/constituent/window_{windowCount}/{algorithm}.csv"
+                df_pred_path = f"./data/filtered_predictions/window_{windowCount}_constituent_methods_{algorithm}.tsv"
+                truth_file_path = f"./data/windows/test_to_get_constituent_methods_{windowCount}.csv"
+                df_pred = pd.read_csv(df_pred_path, sep="\t")
+                df_pred = self.drop_users_with_less_than_n_ratings(df_pred, 5)
+                userList = self.split_in_users(df_pred)
+                truth_file = pd.read_csv(truth_file_path)
+                results = []
 
-        #         usersWithMoreThan10Ratings = truth_file['user'].value_counts()
-        #         usersWithMoreThan10Ratings = usersWithMoreThan10Ratings[usersWithMoreThan10Ratings > 10].index.tolist()
-        #         print(f"Total user count for {algorithm} in window {windowCount}: {len(userList)}")
-        #         print(f"Total users with more than 10 ratings: {len(usersWithMoreThan10Ratings)}")
+                usersWithMoreThan10Ratings = truth_file['user'].value_counts()
+                usersWithMoreThan10Ratings = usersWithMoreThan10Ratings[usersWithMoreThan10Ratings > 10].index.tolist()
+                print(f"Total user count for {algorithm} in window {windowCount}: {len(userList)}")
+                print(f"Total users with more than 10 ratings: {len(usersWithMoreThan10Ratings)}")
 
-        #         for userId in userList:
-        #             user_metrics = self.evaluate_user(userId, truth_file, df_pred)
-        #             if user_metrics:
-        #                 user_metrics["user"] = userId
-        #                 results.append(user_metrics)
-        #         self._save_user_metrics(results, output_dir_constituent)
+                for userId in userList:
+                    user_metrics = self.evaluate_user(userId, truth_file, df_pred)
+                    if user_metrics:
+                        user_metrics["user"] = userId
+                        results.append(user_metrics)
+                self._save_user_metrics(results, output_dir_constituent)
 
         for algorithm in hybrid_algorithms:
             for windowCount in range(1, 21):

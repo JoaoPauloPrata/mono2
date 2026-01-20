@@ -286,14 +286,15 @@ class Evaluator:
         out_df.to_csv(out_path)
         print(f"Métricas salvas em: {out_path}")
 
-    def getGeoRisk(self, mat, alpha):
+
+    def getGeoRisk(mat, alpha):
         ##### IMPORTANT
         # This function takes a matrix of number of rows as a number of queries, and the number of collumns as the number of systems.
         ##############
-        numSystems = mat.shape[0]
-        numQueries = mat.shape[1]
-
-
+        #number of systems is the number of collumns
+        numSystems = mat.shape[1] 
+        #number of queries is the number of rows
+        numQueries = mat.shape[0] 
         Tj = np.array([0.0] * numQueries)
         Si = np.array([0.0] * numSystems)
         geoRisk = np.array([0.0] * numSystems)
@@ -304,7 +305,7 @@ class Evaluator:
             Si[i] = np.sum(mat[:, i])
             mSi[i] = np.mean(mat[:, i])
 
-        for j in range(numSystems):
+        for j in range(numQueries):
             Tj[j] = np.sum(mat[j, :])
 
         N = np.sum(Tj)
@@ -313,7 +314,7 @@ class Evaluator:
             tempZRisk = 0
             for j in range(numQueries):
                 eij = Si[i] * (Tj[j] / N)
-                xij_eij = mat[i, j] - eij
+                xij_eij = mat[j, i] - eij
                 if eij != 0:
                     ziq = xij_eij / math.sqrt(eij)
                 else:
