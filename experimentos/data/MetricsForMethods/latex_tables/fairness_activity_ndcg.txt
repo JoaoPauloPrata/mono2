@@ -1,0 +1,27 @@
+\begin{table}[H]
+\centering
+\caption{Resultados de fairness por atividade (NDCG) ao longo das janelas temporais.}
+\label{tab:fairness_activity-ndcg}
+
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccc}
+\toprule
+\textbf{Método} & \textbf{Média} & \textbf{DP} & \textbf{Mediana} & \textbf{Mín.} & \textbf{Máx.} & \textbf{IC 95\% (Inf.)} & \textbf{IC 95\% (Sup.)} & \textbf{Grupo} \\
+\midrule
+Bagging & 0.03087 & 0.02822 & 0.02573 & 0.00042 & 0.10849 & 0.01818 & 0.04356 & 1 \\
+AdaBoost & 0.02826 & 0.02230 & 0.01752 & 0.00770 & 0.08074 & 0.01823 & 0.03829 & 1 \\
+RandomForest & 0.02606 & 0.02457 & 0.01469 & 0.00101 & 0.08301 & 0.01501 & 0.03711 & 1 \\
+GradientBoosting & 0.02537 & 0.02161 & 0.01849 & 0.00101 & 0.08117 & 0.01566 & 0.03509 & 1 \\
+Tweedie & 0.02422 & 0.02109 & 0.01612 & 0.00144 & 0.06960 & 0.01474 & 0.03371 & 1 \\
+Ridge & 0.02346 & 0.01942 & 0.01710 & 0.00410 & 0.06646 & 0.01472 & 0.03219 & 1 \\
+LinearSVR & 0.02321 & 0.01973 & 0.01520 & 0.00253 & 0.06604 & 0.01434 & 0.03208 & 1 \\
+BayesianRidge & 0.02300 & 0.02009 & 0.01363 & 0.00377 & 0.06574 & 0.01396 & 0.03203 & 1 \\
+itemKNN & 0.01063 & 0.00782 & 0.00994 & 0.00053 & 0.02672 & 0.00721 & 0.01406 & 1 \\
+SVD & 0.01050 & 0.00753 & 0.00937 & 0.00069 & 0.02680 & 0.00720 & 0.01380 & 1 \\
+userKNN & 0.01014 & 0.00779 & 0.00880 & 0.00228 & 0.03804 & 0.00673 & 0.01356 & 1 \\
+BIASEDMF & 0.00919 & 0.00755 & 0.00712 & 0.00078 & 0.02632 & 0.00588 & 0.01250 & 1 \\
+BIAS & 0.00891 & 0.00796 & 0.00619 & 0.00062 & 0.02756 & 0.00542 & 0.01240 & 1 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

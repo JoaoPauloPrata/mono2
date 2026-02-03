@@ -89,10 +89,19 @@ class FinalResultAggregatorTest(unittest.TestCase):
             "AlgA",
             "f1",
             "georisk",
-            {"mean": 2.0, "std": 1.0, "median": 2.0, "min": 1.0, "max": 3.0},
+            {
+                "mean": 2.0,
+                "std": 1.0,
+                "median": 2.0,
+                "min": 1.0,
+                "max": 3.0,
+                "ci_lower": 2.0 - 1.96 * 1.0 / np.sqrt(2),
+                "ci_upper": 2.0 + 1.96 * 1.0 / np.sqrt(2),
+            },
         )
 
         # Fairness gênero: AlgA f1 -> [0.3, 0.5]
+        # Valores duplicados por const./hybrid => [0.3,0.3,0.5,0.5]
         self._assert_row(
             df,
             "AlgA",
@@ -100,27 +109,32 @@ class FinalResultAggregatorTest(unittest.TestCase):
             "fairness_gender",
             {
                 "mean": 0.4,
-                "std": np.std([0.3, 0.5]),
+                "std": np.std([0.3, 0.3, 0.5, 0.5]),
                 "median": 0.4,
                 "min": 0.3,
                 "max": 0.5,
+                "ci_lower": 0.4 - 1.96 * np.std([0.3, 0.3, 0.5, 0.5]) / np.sqrt(4),
+                "ci_upper": 0.4 + 1.96 * np.std([0.3, 0.3, 0.5, 0.5]) / np.sqrt(4),
             },
         )
 
         # Fairness atividade: AlgB rmse -> [0.2, 0.4]
-    self._assert_row(
-        df,
-        "AlgB",
-        "rmse",
-        "fairness_activity",
-        {
-            "mean": 0.3,
-            "std": np.std([0.2, 0.4]),
-            "median": 0.3,
-            "min": 0.2,
-            "max": 0.4,
-        },
-    )
+        # Valores duplicados por const./hybrid => [0.2,0.2,0.4,0.4]
+        self._assert_row(
+            df,
+            "AlgB",
+            "rmse",
+            "fairness_activity",
+            {
+                "mean": 0.3,
+                "std": np.std([0.2, 0.2, 0.4, 0.4]),
+                "median": 0.3,
+                "min": 0.2,
+                "max": 0.4,
+                "ci_lower": 0.3 - 1.96 * np.std([0.2, 0.2, 0.4, 0.4]) / np.sqrt(4),
+                "ci_upper": 0.3 + 1.96 * np.std([0.2, 0.2, 0.4, 0.4]) / np.sqrt(4),
+            },
+        )
 
 
 if __name__ == "__main__":
