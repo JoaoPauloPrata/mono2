@@ -304,56 +304,50 @@ class RegressionMethodsWithFineTuning:
     #     # Salva os parâmetros otimizados
     #     self.save_optimized_parameters(optimized_models, window_count)
 
-    def loadAndPredictWithOptimizedModels(self, window_count):
+    def loadAndPredictWithOptimizedModels(self, window_count, exec_number):
         # Carrega as predições base e dados de treino/teste
-        recs_from_SVD = pd.read_csv(f"data/filtered_predictions/window_{window_count}_constituent_methods_SVD.tsv", delimiter='\t')
-        recs_from_BIAS = pd.read_csv(f"data/filtered_predictions/window_{window_count}_constituent_methods_BIAS.tsv", delimiter='\t')
-        recs_from_userKNN = pd.read_csv(f"data/filtered_predictions/window_{window_count}_constituent_methods_userKNN.tsv", delimiter='\t')
-        recs_from_itemKNN = pd.read_csv(f"data/filtered_predictions/window_{window_count}_constituent_methods_itemKNN.tsv", delimiter='\t')
-        recs_from_biasedMF = pd.read_csv(f"data/filtered_predictions/window_{window_count}_constituent_methods_BIASEDMF.tsv", delimiter='\t')
+        recs_from_SVD = pd.read_csv(f"data/filtered_predictions/window_{window_count}_{exec_number}_constituent_methods_SVD.tsv", delimiter='\t')
+        recs_from_NMF = pd.read_csv(f"data/filtered_predictions/window_{window_count}_{exec_number}_constituent_methods_NMF.tsv", delimiter='\t')
+        recs_from_StochasticItemKNN = pd.read_csv(f"data/filtered_predictions/window_{window_count}_{exec_number}_constituent_methods_StochasticItemKNN.tsv", delimiter='\t')
+        recs_from_biasedMF = pd.read_csv(f"data/filtered_predictions/window_{window_count}_{exec_number}_constituent_methods_BIASEDMF.tsv", delimiter='\t')
+        
         recs_from_SVD = recs_from_SVD.sort_values('user')
-        recs_from_BIAS = recs_from_BIAS.sort_values('user')
-        recs_from_userKNN = recs_from_userKNN.sort_values('user')
-        recs_from_itemKNN = recs_from_itemKNN.sort_values('user')
+        recs_from_NMF = recs_from_NMF.sort_values('user')
+        recs_from_StochasticItemKNN = recs_from_StochasticItemKNN.sort_values('user')
         recs_from_biasedMF = recs_from_biasedMF.sort_values('user')
 
         scikit_test_data = pd.read_csv(f'data/windows/processed/test_to_get_regression_train_data_{window_count}_filtered.csv', sep=',')
 
-        recs_from_SVD_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_scikit_train_SVD.tsv", delimiter='\t')
-        recs_from_BIAS_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_scikit_train_BIAS.tsv", delimiter='\t')
-        recs_from_userKNN_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_scikit_train_userKNN.tsv", delimiter='\t')
-        recs_from_itemKNN_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_scikit_train_itemKNN.tsv", delimiter='\t')
-        recs_from_biasedMF_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_scikit_train_BIASEDMF.tsv", delimiter='\t')
+        recs_from_SVD_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_{exec_number}_scikit_train_SVD.tsv", delimiter='\t')
+        recs_from_NMF_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_{exec_number}_scikit_train_NMF.tsv", delimiter='\t')
+        recs_from_StochasticItemKNN_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_{exec_number}_scikit_train_StochasticItemKNN.tsv", delimiter='\t')
+        recs_from_biasedMF_to_train_scikit = pd.read_csv(f"data/filtered_predictions/window_{window_count}_{exec_number}_scikit_train_BIASEDMF.tsv", delimiter='\t')
         
 
         print(f"Filtered scikit_test_data: {len(scikit_test_data)} linhas (mantém apenas pares com predições)")
         # X para predição
-        ratings_BIAS_to_use_in_prediction = recs_from_BIAS['prediction'].values
         ratings_SVD_to_use_in_prediction = recs_from_SVD['prediction'].values
-        ratings_userKNN_to_use_in_prediction = recs_from_userKNN['prediction'].values
-        ratings_itemKNN_to_use_in_prediction = recs_from_itemKNN['prediction'].values
+        ratings_NMF_to_use_in_prediction = recs_from_NMF['prediction'].values
+        ratings_StochasticItemKNN_to_use_in_prediction = recs_from_StochasticItemKNN['prediction'].values
         ratings_biasedMF_to_use_in_prediction = recs_from_biasedMF['prediction'].values
-        combined_ratings = [[r, s, t, u, v] for r, s, t, u, v in zip(
-            ratings_BIAS_to_use_in_prediction,
+        combined_ratings = [[r, s, t, u] for r, s, t, u in zip(
             ratings_SVD_to_use_in_prediction,
-            ratings_userKNN_to_use_in_prediction,
-            ratings_itemKNN_to_use_in_prediction,
+            ratings_NMF_to_use_in_prediction,
+            ratings_StochasticItemKNN_to_use_in_prediction,
             ratings_biasedMF_to_use_in_prediction
         )]
         combined_ratings = np.nan_to_num(combined_ratings)
 
         # X de treino e y
-        ratings_BIAS_to_use_in_train = recs_from_BIAS_to_train_scikit['prediction'].values
         ratings_SVD_to_use_in_train = recs_from_SVD_to_train_scikit['prediction'].values
-        ratings_userKNN_to_use_in_train = recs_from_userKNN_to_train_scikit['prediction'].values
-        ratings_itemKNN_to_use_in_train = recs_from_itemKNN_to_train_scikit['prediction'].values
+        ratings_NMF_to_use_in_train = recs_from_NMF_to_train_scikit['prediction'].values
+        ratings_StochasticItemKNN_to_use_in_train = recs_from_StochasticItemKNN_to_train_scikit['prediction'].values
         ratings_biasedMF_to_use_in_train = recs_from_biasedMF_to_train_scikit['prediction'].values
         original_ratings_scikit = scikit_test_data['rating'].values
-        cobined_ratings_train = [[r, s, t, u, v] for r, s, t, u, v in zip(
-            ratings_BIAS_to_use_in_train,
+        cobined_ratings_train = [[r, s, t, u] for r, s, t, u in zip(
             ratings_SVD_to_use_in_train,
-            ratings_userKNN_to_use_in_train,
-            ratings_itemKNN_to_use_in_train,
+            ratings_NMF_to_use_in_train,
+            ratings_StochasticItemKNN_to_use_in_train,
             ratings_biasedMF_to_use_in_train
         )]
         cobined_ratings_train = np.nan_to_num(cobined_ratings_train)
@@ -424,28 +418,28 @@ class RegressionMethodsWithFineTuning:
 
         # Salva as predições
         pd.DataFrame(predictedBayesianRidge).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedBayesianRidge.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_{exec_number}_predictedBayesianRidge.tsv", sep='\t', index=False
         )
         pd.DataFrame(predictedTweedie).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedTweedie.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_{exec_number}_predictedTweedie.tsv", sep='\t', index=False
         )
         pd.DataFrame(predicted).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedRidge.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_{exec_number}_predictedRidge.tsv", sep='\t', index=False
         )
         pd.DataFrame(predictedRandomForest).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedRandomForest.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_{exec_number}_predictedRandomForest.tsv", sep='\t', index=False
         )
         pd.DataFrame(predictedBagging).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedBagging.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_{exec_number}_predictedBagging.tsv", sep='\t', index=False
         )
         pd.DataFrame(predictedAdaBoost).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedAdaBoost.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_{exec_number}_predictedAdaBoost.tsv", sep='\t', index=False
         )
         pd.DataFrame(predictedGradientBoosting).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedGradientBoosting.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_{exec_number}_predictedGradientBoosting.tsv", sep='\t', index=False
         )
         pd.DataFrame(predictedLinearSVR).to_csv(
-            f"data/HybridPredictions/window_{window_count}_predictedLinearSVR.tsv", sep='\t', index=False
+            f"data/HybridPredictions/window_{window_count}_{exec_number}_predictedLinearSVR.tsv", sep='\t', index=False
         )
 
         print(f"Predições (com parâmetros carregados) salvas para janela {window_count}")

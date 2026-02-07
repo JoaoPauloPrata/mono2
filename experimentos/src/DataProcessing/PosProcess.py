@@ -68,8 +68,8 @@ def filter_to_common_pairs_by_window_and_type():
     # Cria diretório de saída se não existir
     os.makedirs(output_dir, exist_ok=True)
     
-    # Lista de métodos disponíveis
-    methods = ["BIAS", "SVD", "userKNN", "itemKNN", "BIASEDMF"]
+    # Lista de métodos disponíveis (atualizado)
+    methods = ["SVD", "BIASEDMF", "NMF", "StochasticItemKNN"]
     
     # Busca todas as janelas disponíveis
     windows = set()
@@ -79,73 +79,88 @@ def filter_to_common_pairs_by_window_and_type():
             files = os.listdir(method_dir)
             for file in files:
                 if file.startswith('window_') and file.endswith('.tsv'):
-                    # Extrai número da janela
-                    parts = file.split('_')
-                    if len(parts) >= 2:
-                        window_num = parts[1]
-                        windows.add(int(window_num))
+                    # Formato: window_{window}_{exec}_{type}_METHOD.tsv
+                    parts = file.replace('.tsv','').split('_')
+                    if len(parts) >= 3:
+                        try:
+                            window_num = int(parts[1])
+                            windows.add(window_num)
+                        except ValueError:
+                            continue
     
     windows = sorted(windows)
     print(f"Janelas encontradas: {windows}")
     
-    # Tipos de arquivo
+    # Tipos de arquivo (o path já inclui exec_number no nome)
     file_types = ["constituent_methods", "scikit_train"]
     
     for window in windows:
         for file_type in file_types:
             print(f"\nProcessando janela {window}, tipo {file_type}")
             
-            # Coleta todos os arquivos para esta janela e tipo
-            file_paths = []
+            # Encontrar todas as execuções disponíveis (third token in filename)
+            exec_numbers = set()
             for method in methods:
-                file_path = os.path.join(base_dir, method, f"window_{window}_{file_type}_{method}.tsv")
-                if os.path.exists(file_path):
-                    file_paths.append(file_path)
-                else:
-                    print(f"Arquivo não encontrado: {file_path}")
-            
-            if len(file_paths) < len(methods):
-                print(f"Aviso: Apenas {len(file_paths)}/{len(methods)} arquivos encontrados para janela {window}, tipo {file_type}")
+                method_dir = os.path.join(base_dir, method)
+                pattern = f"window_{window}_*_ {file_type}_{method}.tsv"  # placeholder (we'll glob)
+                for fname in os.listdir(method_dir):
+                    if fname.startswith(f"window_{window}_") and f"_{file_type}_{method}.tsv" in fname:
+                        parts = fname.replace('.tsv','').split('_')
+                        if len(parts) >= 4:
+                            try:
+                                exec_numbers.add(int(parts[2]))
+                            except ValueError:
+                                continue
+            exec_numbers = sorted(exec_numbers)
+            if not exec_numbers:
+                print(f"Nenhuma execução encontrada para janela {window}, tipo {file_type}")
                 continue
             
-            # Encontra pares comuns (apenas com predições válidas)
-            print(f"Analisando pares válidos em cada método:")
-            common_pairs = get_common_user_item_pairs(file_paths)
-            
-            if common_pairs.empty:
-                print(f"Nenhum par comum encontrado para janela {window}, tipo {file_type}")
-                continue
+            for exec_number in exec_numbers:
+                print(f"  Execução {exec_number}")
+                file_paths = []
+                for method in methods:
+                    file_path = os.path.join(base_dir, method, f"window_{window}_{exec_number}_{file_type}_{method}.tsv")
+                    if os.path.exists(file_path):
+                        file_paths.append(file_path)
+                    else:
+                        print(f"Arquivo não encontrado: {file_path}")
                 
-            # Filtra cada arquivo para manter apenas os pares comuns
-            for file_path in file_paths:
-                method = os.path.basename(file_path).split('_')[-1].replace('.tsv', '')
+                if len(file_paths) < len(methods):
+                    print(f"Aviso: Apenas {len(file_paths)}/{len(methods)} arquivos encontrados para janela {window}, exec {exec_number}, tipo {file_type}")
+                    continue
                 
-                # Carrega o arquivo original
-                df = pd.read_csv(file_path, sep='\t')
-                print(f"  {method}: {len(df)} linhas -> ", end="")
+                print(f"    Analisando pares válidos em cada método:")
+                common_pairs = get_common_user_item_pairs(file_paths)
                 
-                # Faz merge com pares comuns para filtrar
-                df_filtered = pd.merge(common_pairs, df, on=['user', 'item'], how='left')
+                if common_pairs.empty:
+                    print(f"    Nenhum par comum encontrado para janela {window}, exec {exec_number}, tipo {file_type}")
+                    continue
+                    
+                for file_path in file_paths:
+                    method = os.path.basename(file_path).split('_')[-1].replace('.tsv', '')
+                    
+                    df = pd.read_csv(file_path, sep='\t')
+                    print(f"    {method}: {len(df)} linhas -> ", end="")
+                    
+                    df_filtered = pd.merge(common_pairs, df, on=['user', 'item'], how='left')
+                    
+                    initial_count = len(df_filtered)
+                    df_filtered = df_filtered.dropna(subset=['prediction'])
+                    df_filtered = df_filtered[np.isfinite(df_filtered['prediction'])]
+                    final_count = len(df_filtered)
+                    
+                    if initial_count != final_count:
+                        print(f"Removidos {initial_count - final_count} pares com predições inválidas")
+                    
+                    df_filtered = df_filtered.sort_values(['user', 'item']).reset_index(drop=True)
+                    
+                    print(f"{len(df_filtered)} linhas")
+                    
+                    output_file = os.path.join(output_dir, f"window_{window}_{exec_number}_{file_type}_{method}.tsv")
+                    df_filtered.to_csv(output_file, sep='\t', index=False)
                 
-                # Remove qualquer linha que ainda possa ter predição NaN após o merge
-                initial_count = len(df_filtered)
-                df_filtered = df_filtered.dropna(subset=['prediction'])
-                df_filtered = df_filtered[np.isfinite(df_filtered['prediction'])]
-                final_count = len(df_filtered)
-                
-                if initial_count != final_count:
-                    print(f"Removidos {initial_count - final_count} pares com predições inválidas")
-                
-                # Ordena por user, item para consistência
-                df_filtered = df_filtered.sort_values(['user', 'item']).reset_index(drop=True)
-                
-                print(f"{len(df_filtered)} linhas")
-                
-                # Salva arquivo filtrado
-                output_file = os.path.join(output_dir, f"window_{window}_{file_type}_{method}.tsv")
-                df_filtered.to_csv(output_file, sep='\t', index=False)
-            
-            print(f"Janela {window}, tipo {file_type}: {len(common_pairs)} pares comuns mantidos")
+                print(f"    Janela {window}, exec {exec_number}, tipo {file_type}: {len(common_pairs)} pares comuns mantidos")
 
 def add_header_to_hybrid():
     """
@@ -156,65 +171,56 @@ def add_header_to_hybrid():
     hybrid_dir = "../../data/HybridPredictions"
     filtered_dir = "../../data/filtered_predictions"
     
-    # Busca todas as janelas disponíveis nos arquivos híbridos
-    windows = set()
+    # Busca janelas e execuções disponíveis
+    windows_execs = set()
     for file_name in os.listdir(hybrid_dir):
         if file_name.startswith('window_') and file_name.endswith('.tsv'):
-            # Extrai número da janela
-            parts = file_name.split('_')
-            if len(parts) >= 2:
-                window_num = parts[1]
+            parts = file_name.replace('.tsv','').split('_')
+            # Formato esperado: window_{window}_{exec}_predicted{Algo}.tsv
+            if len(parts) >= 4 and parts[0] == 'window':
                 try:
-                    windows.add(int(window_num))
+                    win = int(parts[1])
+                    ex = int(parts[2])
+                    windows_execs.add((win, ex))
                 except ValueError:
                     continue
     
-    windows = sorted(windows)
-    print(f"Janelas encontradas para correção: {windows}")
+    windows_execs = sorted(windows_execs)
+    print(f"Combinações janela/exec encontradas para correção: {windows_execs}")
     
-    for window in windows:
-        print(f"\nProcessando janela {window}...")
+    for window, exec_number in windows_execs:
+        print(f"\nProcessando janela {window}, exec {exec_number}...")
         
-        # Carrega o arquivo de referência para obter pares user/item
-        reference_file = os.path.join(filtered_dir, f"window_{window}_constituent_methods_BIAS.tsv")
-        
+        reference_file = os.path.join(filtered_dir, f"window_{window}_{exec_number}_constituent_methods_BIASEDMF.tsv")
         if not os.path.exists(reference_file):
             print(f"Arquivo de referência não encontrado: {reference_file}")
             continue
             
-        # Carrega pares user/item do arquivo de referência
         reference_df = pd.read_csv(reference_file, sep='\t')
         user_item_pairs = reference_df[['user', 'item']].copy()
-        
         print(f"  Pares user/item carregados: {len(user_item_pairs)}")
         
-        # Processa cada algoritmo híbrido
         for method in algo:
-            hybrid_file = os.path.join(hybrid_dir, f"window_{window}_predicted{method}.tsv")
+            hybrid_file = os.path.join(hybrid_dir, f"window_{window}_{exec_number}_predicted{method}.tsv")
             
             if not os.path.exists(hybrid_file):
                 print(f"  Arquivo híbrido não encontrado: {hybrid_file}")
                 continue
             
-            # Carrega predições híbridas (apenas valores) - pula a primeira linha (linha com "0")
             predictions_df = pd.read_csv(hybrid_file, sep='\t', header=None, names=['prediction'], skiprows=1)
-            
             print(f"  {method}: {len(predictions_df)} predições -> ", end="")
             
-            # Verifica se o número de predições coincide com os pares
             if len(predictions_df) != len(user_item_pairs):
                 print(f"ERRO: {len(predictions_df)} predições != {len(user_item_pairs)} pares!")
                 continue
             
-            # Combina pares user/item com predições
             final_df = user_item_pairs.copy()
             final_df['prediction'] = predictions_df['prediction'].values
             
-            # Salva arquivo corrigido
             final_df.to_csv(hybrid_file, sep='\t', index=False)
             print(f"corrigido com header")
         
-        print(f"Janela {window} processada com sucesso!")
+        print(f"Janela {window}, exec {exec_number} processada com sucesso!")
     
     print("\nTodos os arquivos híbridos foram corrigidos!")
 
@@ -256,12 +262,12 @@ def filter_test_data_to_match_predictions():
         test_files_with_references = [
             {
                 "file": f"test_to_get_regression_train_data_{window}.csv",
-                "reference": f"window_{window}_scikit_train_BIAS.tsv",
+                "reference": f"window_{window}_{1}_scikit_train_BIASEDMF.tsv",
                 "description": "scikit_train"
             },
             {
                 "file": f"test_to_get_constituent_methods_{window}.csv", 
-                "reference": f"window_{window}_constituent_methods_BIAS.tsv",
+                "reference": f"window_{window}_{1}_constituent_methods_BIASEDMF.tsv",
                 "description": "constituent_methods"
             }
         ]
@@ -348,14 +354,14 @@ if __name__ == "__main__":
     
     # Primeiro filtra os arquivos de predição para pares comuns
     print("\n=== PASSO 1: Filtrando arquivos de predição ===")
-    filter_to_common_pairs_by_window_and_type()
+    # filter_to_common_pairs_by_window_and_type()
     
     # Depois filtra os dados de teste para serem consistentes
     # print("\n=== PASSO 2: Filtrando dados de teste ===")
-    filter_test_data_to_match_predictions()
+    # filter_test_data_to_match_predictions()
     
     # Opcional: corrigir headers dos híbridos se necessário
     # print("\n=== PASSO 3: Corrigindo headers híbridos ===")
-    # add_header_to_hybrid()
+    add_header_to_hybrid()
     
     print("\n✅ Processamento completo finalizado!")

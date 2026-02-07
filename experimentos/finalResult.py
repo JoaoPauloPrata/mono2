@@ -17,16 +17,18 @@ class FinalResultAggregator:
         fairness_gender_path: str = "./data/MetricsForMethods/Fairness/gender",
         fairness_activity_path: str = "./data/MetricsForMethods/Fairness/kmeans",
         output_path: str = "./data/MetricsForMethods/final_results.csv",
+        executions: int = 5,
     ) -> None:
         self.georisk_path = georisk_path.rstrip("/\\")
         self.fairness_gender_path = fairness_gender_path.rstrip("/\\")
         self.fairness_activity_path = fairness_activity_path.rstrip("/\\")
         self.output_path = output_path
+        self.executions = executions
+        
         self.metrics = ["rmse", "f1", "ndcg", "mae"]
         self.algorithms = [
-            "itemKNN",
-            "BIAS",
-            "userKNN",
+            "StochasticItemKNN",
+            "NMF",
             "SVD",
             "BIASEDMF",
             "BayesianRidge",
@@ -66,25 +68,26 @@ class FinalResultAggregator:
         return {m: [] for m in metrics}
 
     def _gather_georisk(self) -> Dict[str, Dict[str, List[float]]]:
-        # method -> metric -> list of values over windows
+        # method -> metric -> list of values over windows/execs
         acc: Dict[str, Dict[str, List[float]]] = {
             algo: self._init_result_dict(self.metrics) for algo in self.algorithms
         }
         for window in self.window_range:
-            for metric in self.metrics:
-                path = f"{self.georisk_path}/window_{window}/{metric}.csv"
-                if not os.path.exists(path):
-                    continue
-                df = pd.read_csv(path)
-                if "algorithm" not in df.columns or "georisk" not in df.columns:
-                    continue
-                for _, row in df.iterrows():
-                    algo = row["algorithm"]
-                    if algo not in acc:
-                        acc[algo] = self._init_result_dict(self.metrics)
-                    val = row["georisk"]
-                    if pd.notna(val):
-                        acc[algo][metric].append(float(val))
+            for exec_number in range(1, self.executions + 1):
+                for metric in self.metrics:
+                    path = f"{self.georisk_path}/window_{window}/execution_{exec_number}/{metric}.csv"
+                    if not os.path.exists(path):
+                        continue
+                    df = pd.read_csv(path)
+                    if "algorithm" not in df.columns or "georisk" not in df.columns:
+                        continue
+                    for _, row in df.iterrows():
+                        algo = row["algorithm"]
+                        if algo not in acc:
+                            acc[algo] = self._init_result_dict(self.metrics)
+                        val = row["georisk"]
+                        if pd.notna(val):
+                            acc[algo][metric].append(float(val))
         return acc
 
     def _gather_fairness(self, base_path: str) -> Dict[str, Dict[str, List[float]]]:
@@ -93,19 +96,20 @@ class FinalResultAggregator:
         }
         metric_map = {"rmse": "RMSE", "ndcg": "NDCG", "f1": "F1", "mae": "MAE"}
         for window in self.window_range:
-            for group in ("constituent", "hybrid"):
-                for algo in self.algorithms:
-                    path = f"{base_path}/{group}/window_{window}/{algo}_absDiff_.csv"
-                    if not os.path.exists(path):
-                        continue
-                    df = pd.read_csv(path)
-                    if df.empty:
-                        continue
-                    row = df.iloc[0]
-                    for m in self.metrics:
-                        col = metric_map[m]
-                        if col in row and pd.notna(row[col]):
-                            acc[algo][m].append(float(row[col]))
+            for exec_number in range(1, self.executions + 1):
+                for group in ("constituent", "hybrid"):
+                    for algo in self.algorithms:
+                        path = f"{base_path}/{group}/window_{window}/execution_{exec_number}/{algo}_absDiff_.csv"
+                        if not os.path.exists(path):
+                            continue
+                        df = pd.read_csv(path)
+                        if df.empty:
+                            continue
+                        row = df.iloc[0]
+                        for m in self.metrics:
+                            col = metric_map[m]
+                            if col in row and pd.notna(row[col]):
+                                acc[algo][m].append(float(row[col]))
         return acc
 
     def _accumulate_rows(

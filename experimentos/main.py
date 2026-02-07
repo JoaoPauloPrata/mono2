@@ -1,9 +1,9 @@
 from src.DataProcessing.TimePeriodSpliter import TimePeriodSpliter
 import pandas as pd
 from src.Recommender import Recommender
-from sklearn.model_selection import train_test_split
 import time
 from src.Metrics.Evaluator import Evaluator
+import time
 def split_data():
     datapath = "./data/ml-1m/"
     ratings_cols = ['user', 'item', 'rating', 'timestamp']
@@ -26,14 +26,14 @@ def split_data():
         count += 1
         time_window = spliter.get_window(count)
 
-def load_data_and_run(count):
-    train_to_get_regression_train_data = pd.read_csv("./data/windows/train_to_get_regression_train_data_"+str(count)+".csv")
-    test_to_get_regression_train_data = pd.read_csv("./data/windows/test_to_get_regression_train_data_"+str(count)+".csv")
-    train_to_get_constituent_methods = pd.read_csv("./data/windows/train_to_get_constituent_methods_"+str(count)+".csv")
-    test_to_get_constituent_methods = pd.read_csv("./data/windows/test_to_get_constituent_methods_"+str(count)+".csv")
+def load_data_and_run(window_number, exec_number):
+    train_to_get_regression_train_data = pd.read_csv("./data/windows/train_to_get_regression_train_data_"+str(window_number)+".csv")
+    test_to_get_regression_train_data = pd.read_csv("./data/windows/test_to_get_regression_train_data_"+str(window_number)+".csv")
+    train_to_get_constituent_methods = pd.read_csv("./data/windows/train_to_get_constituent_methods_"+str(window_number)+".csv")
+    test_to_get_constituent_methods = pd.read_csv("./data/windows/test_to_get_constituent_methods_"+str(window_number)+".csv")
     recommend = Recommender()
-    recommend.runRecomendations(train_to_get_regression_train_data, test_to_get_regression_train_data, count, "scikit_train")
-    recommend.runRecomendations(train_to_get_constituent_methods, test_to_get_constituent_methods, count, "constituent_methods")
+    recommend.runRecomendations(train_to_get_regression_train_data, test_to_get_regression_train_data, window_number, exec_number, "scikit_train")
+    recommend.runRecomendations(train_to_get_constituent_methods, test_to_get_constituent_methods, window_number, exec_number, "constituent_methods")
 
 
 def split_full_windows():
@@ -49,15 +49,19 @@ def split_full_windows():
         count += 1
         time_window = spliter.get_window(count)
 
-split_data()
 
 startExecutionTime = time.time()
 recommender = Recommender()
 evaluator = Evaluator()
-for i in range(1, 21):
-    load_data_and_run(i)
-    recommender.run_hybrid_methods(i)
-    evaluator.evaluateAllMetricsForAllMethods(i)
+for exec_number in range(1, 6):
+    print(f"Starting execution number {exec_number}...")
+    for window_number in range(1, 21):
+        start_window_time = time.time()
+        # print(f"Processing window {window_number}...")
+        # load_data_and_run(window_number, exec_number)
+        recommender.run_hybrid_methods(window_number, exec_number)
+        # print(f"Recommendations for window {window_number} completed in {time.time() - start_window_time} seconds.")
+        evaluator.evaluateAllMetricsForAllMethods(window_number, exec_number)
 
 # finishExecutionTime = time.time()
 # print(f"Executions finished at {time.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -65,4 +69,3 @@ for i in range(1, 21):
 # load_data_and_run(1, 1)
 # load_data_and_run(1)
 
-split_data()

@@ -1,4 +1,3 @@
-import pandas as pd
 from src.Methods.ConstituentMethods import ConstituentMethods 
 from src.Methods.RegressionMethodsWithFineTuning import RegressionMethodsWithFineTuning
 
@@ -6,14 +5,13 @@ from src.Methods.RegressionMethodsWithFineTuning import RegressionMethodsWithFin
 class Recommender:
     def __init__(self):
         pass 
-    def runRecomendations(self, train, test, window_number, path):
+    def runRecomendations(self, train, test, window_number, exec_number,path):
         print("Running recommendations for window " + str(window_number))
         recommender = ConstituentMethods()
-        recommender.recommenderWithItemKNN(train, test,  f"window_{window_number}_{path}_itemKNN.tsv" )
-        recommender.recommenderWithUserKNN(train, test,   f"window_{window_number}_{path}_userKNN.tsv")
-        recommender.recommenderWithSvd(train, test,   f"window_{window_number}_{path}_SVD.tsv")  
-        recommender.recommenderWithBiasedMF(train, test,   f"window_{window_number}_{path}_BIASEDMF.tsv")        
-        recommender.recommenderWithBias(train, test,   f"window_{window_number}_{path}_BIAS.tsv")
+        recommender.recommenderWithStochasticItemKNN(train, test,   f"window_{window_number}_{exec_number}_{path}_StochasticItemKNN.tsv")
+        recommender.recommenderWithSvd(train, test,   f"window_{window_number}_{exec_number}_{path}_SVD.tsv")  
+        recommender.recommenderWithBiasedMF(train, test,   f"window_{window_number}_{exec_number}_{path}_BIASEDMF.tsv")      
+        recommender.recommenderWithNMF(train, test,   f"window_{window_number}_{exec_number}_{path}_NMF.tsv")  
 
     def runOptimization(self):
         for i in range(1, 21):  
@@ -48,7 +46,7 @@ class Recommender:
         print("Recomendações híbridas (após fine-tuning) concluídas.")
 
     # Mantido por compatibilidade: passa a usar o fluxo "após fine-tuning"
-    def run_hybrid_methods(self, windows):
+    def run_hybrid_methods(self, window_number, exec_number=None):
         regression = RegressionMethodsWithFineTuning()
-        regression.loadAndPredictWithOptimizedModels(windows)
+        regression.loadAndPredictWithOptimizedModels(window_number, exec_number)
         print("Recomendações híbridas (compat) concluídas.")

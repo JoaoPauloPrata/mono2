@@ -14,11 +14,13 @@ class MetricMatrixBuilder:
         self,
         input_path: str = "./data/MetricsForMethods/ByUser",
         output_path: str = "./data/MetricsForMethods/ByMetric",
+        executions: int = 5,
     ) -> None:
         self.input_path = input_path.rstrip("/\\")
         self.output_path = output_path.rstrip("/\\")
+        self.executions = executions
         self.metrics = ["rmse", "f1", "ndcg", "mae"]
-        self.constituent_algorithms = ["itemKNN", "BIAS", "userKNN", "SVD", "BIASEDMF"]
+        self.constituent_algorithms = ["SVD", "BIASEDMF", "NMF", "StochasticItemKNN"]
         self.hybrid_algorithms = [
             "BayesianRidge",
             "Tweedie",
@@ -76,33 +78,34 @@ class MetricMatrixBuilder:
 
     def _process_all_algorithms(self) -> None:
         for window in range(1, 21):
-            # Carrega todos os CSVs de usuários (constituent + hybrid)
-            algo_to_df: Dict[str, pd.DataFrame] = {}
-            algorithms_order: List[str] = []
-            for group, algorithms in (
-                ("constituent", self.constituent_algorithms),
-                ("hybrid", self.hybrid_algorithms),
-            ):
-                for algo in algorithms:
-                    file_path = f"{self.input_path}/{group}/window_{window}/{algo}.csv"
-                    if os.path.exists(file_path):
-                        algo_to_df[algo] = self._read_algo_user_metrics(file_path)
-                        algorithms_order.append(algo)
+            for exec_number in range(1, self.executions + 1):
+                # Carrega todos os CSVs de usuários (constituent + hybrid)
+                algo_to_df: Dict[str, pd.DataFrame] = {}
+                algorithms_order: List[str] = []
+                for group, algorithms in (
+                    ("constituent", self.constituent_algorithms),
+                    ("hybrid", self.hybrid_algorithms),
+                ):
+                    for algo in algorithms:
+                        file_path = f"{self.input_path}/{group}/window_{window}/{algo}_execution{exec_number}.csv"
+                        if os.path.exists(file_path):
+                            algo_to_df[algo] = self._read_algo_user_metrics(file_path)
+                            algorithms_order.append(algo)
 
-            if not algo_to_df:
-                continue
+                if not algo_to_df:
+                    continue
 
-            users = self._collect_users(algo_to_df.values())
+                users = self._collect_users(algo_to_df.values())
 
-            for metric in self.metrics:
-                matrix_df = self._build_matrix(
-                    algo_to_df, metric, users, algorithms_order
-                )
-                out_path = f"{self.output_path}/window_{window}/{metric}.csv"
-                self._save_matrix(matrix_df, out_path)
-                print(
-                    f"Matriz salva em {out_path} (metric={metric}, window={window}, users={len(users)}, algos={len(algo_to_df)})"
-                )
+                for metric in self.metrics:
+                    matrix_df = self._build_matrix(
+                        algo_to_df, metric, users, algorithms_order
+                    )
+                    out_path = f"{self.output_path}/window_{window}/execution_{exec_number}/{metric}.csv"
+                    self._save_matrix(matrix_df, out_path)
+                    print(
+                        f"Matriz salva em {out_path} (metric={metric}, window={window}, exec={exec_number}, users={len(users)}, algos={len(algo_to_df)})"
+                    )
 
     def build(self) -> None:
         self._process_all_algorithms()

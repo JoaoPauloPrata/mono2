@@ -18,11 +18,13 @@ class GeoRiskRunner:
         metric_path: str = "./data/MetricsForMethods/ByMetric",
         output_path: str = "./data/MetricsForMethods/GeoRisk",
         alpha: float = 0.05,
+        executions: int = 5,
     ) -> None:
         self.metric_path = metric_path.rstrip("/\\")
         self.output_path = output_path.rstrip("/\\")
         self.metrics = ["rmse", "f1", "ndcg", "mae"]
         self.alpha = alpha
+        self.executions = executions
         self.evaluator = Evaluator()
 
     @staticmethod
@@ -46,22 +48,24 @@ class GeoRiskRunner:
 
     def run(self) -> None:
         for window in range(1, 21):
-            for metric in self.metrics:
-                matrix_path = f"{self.metric_path}/window_{window}/{metric}.csv"
-                if not os.path.exists(matrix_path):
-                    continue
+            for exec_number in range(1, self.executions + 1):
+                for metric in self.metrics:
+                    matrix_path = f"{self.metric_path}/window_{window}/execution_{exec_number}/{metric}.csv"
+                    if not os.path.exists(matrix_path):
+                        continue
 
-                df = self._read_matrix(matrix_path)
-                algo_names = [c for c in df.columns if c != "user"]
-                mat = self._to_numeric_matrix(df)
+                    df = self._read_matrix(matrix_path)
+                    algo_names = [c for c in df.columns if c != "user"]
+                    mat = self._to_numeric_matrix(df)
 
-                geo_scores = Evaluator.getGeoRisk(mat, self.alpha)
+                    higher_is_better = metric not in ("rmse", "mae")
+                    geo_scores = Evaluator.getGeoRisk(mat, self.alpha, higher_is_better)
 
-                out_path = f"{self.output_path}/window_{window}/{metric}.csv"
-                self._save_georisk(out_path, algo_names, geo_scores)
-                print(
-                    f"GeoRisk salvo em {out_path} (window={window}, metric={metric}, algos={len(algo_names)})"
-                )
+                    out_path = f"{self.output_path}/window_{window}/execution_{exec_number}/{metric}.csv"
+                    self._save_georisk(out_path, algo_names, geo_scores)
+                    print(
+                        f"GeoRisk salvo em {out_path} (window={window}, exec={exec_number}, metric={metric}, algos={len(algo_names)})"
+                    )
 
 
 if __name__ == "__main__":

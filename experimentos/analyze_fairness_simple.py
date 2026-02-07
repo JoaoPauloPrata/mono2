@@ -20,7 +20,7 @@ def analyze_fairness_data():
         print(f"✅ Dados carregados: {len(df)} métodos")
         
         # Define grupos de métodos
-        simple_methods = ["itemKNN", "BIAS", "userKNN", "SVD", "BIASEDMF"]
+        simple_methods = ["SVD", "BIASEDMF", "NMF", "StochasticItemKNN"]
         hybrid_methods = ["BayesianRidge", "Tweedie", "Ridge", "RandomForest", 
                          "Bagging", "AdaBoost", "GradientBoosting", "LinearSVR"]
         

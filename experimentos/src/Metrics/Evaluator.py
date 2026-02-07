@@ -168,8 +168,8 @@ class Evaluator:
         
         return float(np.mean(np.abs(merged['true_value'] - merged['prediction'])))
 
-    def evaluateAllMetricsForAllMethods(self, window_count, top_n=None):
-        constituent_algorithms = ["itemKNN", "BIAS", "userKNN", "SVD", "BIASEDMF"]
+    def evaluateAllMetricsForAllMethods(self, window_count, execution_number, top_n=None):
+        constituent_algorithms = ["SVD", "BIASEDMF", "NMF", "StochasticItemKNN"]
         hybrid_algorithms = ["BayesianRidge", "Tweedie", "Ridge", "RandomForest", "Bagging", "AdaBoost", "GradientBoosting", "LinearSVR"]
 
         # Carrega ground truth
@@ -237,19 +237,19 @@ class Evaluator:
 
         # Constituents
         for constituent in constituent_algorithms:
-            path = f"./data/filtered_predictions/window_{window_count}_constituent_methods_{constituent}.tsv"
+            path = f"./data/filtered_predictions/window_{window_count}_{execution_number}_constituent_methods_{constituent}.tsv"
             recs_df = pd.read_csv(path, delimiter='\t')
             recs_df = recs_df[['user', 'item', 'prediction']]
             compute_metrics_from_frames(recs_df, truth_df, constituent)
 
         # Hybrids: alinhar arquivos simples (apenas coluna de score) com um template
         # Usar BIAS como template (mesma ordenação usada na geração das predições híbridas)
-        template_path = f"./data/filtered_predictions/window_{window_count}_constituent_methods_BIAS.tsv"
+        template_path = f"./data/filtered_predictions/window_{window_count}_{execution_number}_constituent_methods_BIASEDMF.tsv"
         template_df = pd.read_csv(template_path, delimiter='\t').sort_values('user').reset_index(drop=True)
         template_df = template_df[['user', 'item']]
 
         for hybrid in hybrid_algorithms:
-            file_path = f"./data/HybridPredictions/window_{window_count}_predicted{hybrid}.tsv"
+            file_path = f"./data/HybridPredictions/window_{window_count}_{execution_number}_predicted{hybrid}.tsv"
             hyb_df = pd.read_csv(file_path, delimiter='\t')
 
             # Se não houver colunas user/item, constrói usando o template
@@ -280,17 +280,25 @@ class Evaluator:
 
         # Salva CSV agregado
         os.makedirs('./data/MetricsForMethods', exist_ok=True)
-        out_path = f"./data/MetricsForMethods/MetricsForWindow{window_count}.csv"
+        out_path = f"./data/MetricsForMethods/MetricsForWindow{window_count}_{execution_number}.csv"
         out_df = pd.DataFrame(results).set_index('method')        
         out_df = out_df.loc[[*constituent_algorithms, *hybrid_algorithms]]
         out_df.to_csv(out_path)
         print(f"Métricas salvas em: {out_path}")
 
 
-    def getGeoRisk(mat, alpha):
+    def getGeoRisk(mat, alpha, higher_is_better: bool = True):
         ##### IMPORTANT
         # This function takes a matrix of number of rows as a number of queries, and the number of collumns as the number of systems.
         ##############
+        # if metric is "lower is better" (ex.: RMSE/MAE), convert to a utility scale
+        # so that maiores valores sejam melhores para o cálculo de risco.
+        mat = np.array(mat, dtype=float)
+        if not higher_is_better:
+            max_val = np.nanmax(mat)
+            mat = max_val - mat
+            mat[mat < 0] = 0  # garante não-negativo
+
         #number of systems is the number of collumns
         numSystems = mat.shape[1] 
         #number of queries is the number of rows

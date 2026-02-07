@@ -134,90 +134,94 @@ calculator = GroupMetricsDiffCalculator(k_ndcg=5, f1_threshold=3.5)
 
 
 def kmeansGroupCalculator():
-    constituent_algorithms = ["itemKNN", "BIAS", "userKNN", "SVD", "BIASEDMF"]
+    constituent_algorithms = ["SVD", "BIASEDMF", "NMF", "StochasticItemKNN"]
     hybrid_algorithms = ["BayesianRidge", "Tweedie", "Ridge", "RandomForest", "Bagging", "AdaBoost", "GradientBoosting", "LinearSVR"]
 
     for windowCount in range(1, 21):
-        for algorithm in constituent_algorithms:
-            path = f"../../data/filtered_predictions/window_{windowCount}_constituent_methods_{algorithm}.tsv"
-            truth_file = f"../../data/windows/test_to_get_constituent_methods_{windowCount}.csv"
-            group_a_file = f"../../data/windows/kmeansGroup/constituent/window_{windowCount}/window_{windowCount}_group_high.csv"
-            group_b_file = f"../../data/windows/kmeansGroup/constituent/window_{windowCount}/window_{windowCount}_group_low.csv"
-            out_a_file = f"../../data/MetricsForMethods/Fairness/kmeans/constituent/window_{windowCount}/{algorithm}_group_high.csv"
-            out_b_file = f"../../data/MetricsForMethods/Fairness/kmeans/constituent/window_{windowCount}/{algorithm}_group_low.csv"
-            out_diff_file = f"../../data/MetricsForMethods/Fairness/kmeans/constituent/window_{windowCount}/{algorithm}_absDiff_.csv"
+        for execution_number in range(1, 6):
+            for algorithm in constituent_algorithms:
+                path = f"../../data/filtered_predictions/window_{windowCount}_{execution_number}_constituent_methods_{algorithm}.tsv"
+                truth_file = f"../../data/windows/test_to_get_constituent_methods_{windowCount}.csv"
+                group_a_file = f"../../data/windows/kmeansGroup/constituent/window_{windowCount}/window_{windowCount}_group_high.csv"
+                group_b_file = f"../../data/windows/kmeansGroup/constituent/window_{windowCount}/window_{windowCount}_group_low.csv"
+                out_a_file = f"../../data/MetricsForMethods/Fairness/kmeans/constituent/window_{windowCount}/execution_{execution_number}/{algorithm}_group_high.csv"
+                out_b_file = f"../../data/MetricsForMethods/Fairness/kmeans/constituent/window_{windowCount}/execution_{execution_number}/{algorithm}_group_low.csv"
+                out_diff_file = f"../../data/MetricsForMethods/Fairness/kmeans/constituent/window_{windowCount}/execution_{execution_number}/{algorithm}_absDiff_.csv"
 
-            calculator.run(
-                predictions_tsv=path,
-                truth_path=truth_file,
-                group_a_csv=group_a_file,
-                group_b_csv=group_b_file,
-                out_group_a_csv=out_a_file,
-                out_group_b_csv=out_b_file,
-                out_absdiff_csv=out_diff_file
-            )
+                calculator.run(
+                    predictions_tsv=path,
+                    truth_path=truth_file,
+                    group_a_csv=group_a_file,
+                    group_b_csv=group_b_file,
+                    out_group_a_csv=out_a_file,
+                    out_group_b_csv=out_b_file,
+                    out_absdiff_csv=out_diff_file
+                )
 
 
     for windowCount in range(1, 21):
-        for algorithm in hybrid_algorithms:
-            path = f"../../data/HybridPredictions/window_{windowCount}_predicted{algorithm}.tsv"
-            truth_file = f"../../data/windows/test_to_get_constituent_methods_{windowCount}.csv"
-            group_a_file = f"../../data/windows/kmeansGroup/hybrid/window_{windowCount}/window_{windowCount}_group_high.csv"
-            group_b_file = f"../../data/windows/kmeansGroup/hybrid/window_{windowCount}/window_{windowCount}_group_low.csv"
-            out_a_file = f"../../data/MetricsForMethods/Fairness/kmeans/hybrid/window_{windowCount}/{algorithm}_group_high.csv"
-            out_b_file = f"../../data/MetricsForMethods/Fairness/kmeans/hybrid/window_{windowCount}/{algorithm}_group_low.csv"
-            out_diff_file = f"../../data/MetricsForMethods/Fairness/kmeans/hybrid/window_{windowCount}/{algorithm}_absDiff_.csv"
-            calculator.run(
-                predictions_tsv=path,
-                truth_path=truth_file,
-                group_a_csv=group_a_file,
-                group_b_csv=group_b_file,
-                out_group_a_csv=out_a_file,
-                out_group_b_csv=out_b_file,
-                out_absdiff_csv=out_diff_file
-            )
+        for execution_number in range(1, 6):
+            for algorithm in hybrid_algorithms:
+                path = f"../../data/HybridPredictions/window_{windowCount}_{execution_number}_predicted{algorithm}.tsv"
+                truth_file = f"../../data/windows/test_to_get_constituent_methods_{windowCount}.csv"
+                group_a_file = f"../../data/windows/kmeansGroup/hybrid/window_{windowCount}/window_{windowCount}_group_high.csv"
+                group_b_file = f"../../data/windows/kmeansGroup/hybrid/window_{windowCount}/window_{windowCount}_group_low.csv"
+                out_a_file = f"../../data/MetricsForMethods/Fairness/kmeans/hybrid/window_{windowCount}/execution_{execution_number}/{algorithm}_group_high.csv"
+                out_b_file = f"../../data/MetricsForMethods/Fairness/kmeans/hybrid/window_{windowCount}/execution_{execution_number}/{algorithm}_group_low.csv"
+                out_diff_file = f"../../data/MetricsForMethods/Fairness/kmeans/hybrid/window_{windowCount}/execution_{execution_number}/{algorithm}_absDiff_.csv"
+                calculator.run(
+                    predictions_tsv=path,
+                    truth_path=truth_file,
+                    group_a_csv=group_a_file,
+                    group_b_csv=group_b_file,
+                    out_group_a_csv=out_a_file,
+                    out_group_b_csv=out_b_file,
+                    out_absdiff_csv=out_diff_file
+                )
 
 def genderGroupCalculator():
-    constituent_algorithms = ["itemKNN", "BIAS", "userKNN", "SVD", "BIASEDMF"]
+    constituent_algorithms = ["SVD", "BIASEDMF", "NMF", "StochasticItemKNN"]
     hybrid_algorithms = ["BayesianRidge", "Tweedie", "Ridge", "RandomForest", "Bagging", "AdaBoost", "GradientBoosting", "LinearSVR"]
 
     for windowCount in range(1, 21):
-        for algorithm in constituent_algorithms:
-            path = f"../../data/filtered_predictions/window_{windowCount}_constituent_methods_{algorithm}.tsv"
-            truth_file = f"../../data/windows/test_to_get_constituent_methods_{windowCount}.csv"
-            group_a_file = f"../../data/windows/gender/constituent/window_{windowCount}/female/window_{windowCount}_female.csv"
-            group_b_file = f"../../data/windows/gender/constituent/window_{windowCount}/male/window_{windowCount}_male.csv"      
-            out_a_file = f"../../data/MetricsForMethods/Fairness/gender/constituent/window_{windowCount}/{algorithm}_group_female.csv"
-            out_b_file = f"../../data/MetricsForMethods/Fairness/gender/constituent/window_{windowCount}/{algorithm}_group_male.csv"
-            out_diff_file = f"../../data/MetricsForMethods/Fairness/gender/constituent/window_{windowCount}/{algorithm}_absDiff_.csv"
-            calculator.run(
-                predictions_tsv=path,
-                truth_path=truth_file,
-                group_a_csv=group_a_file,
-                group_b_csv=group_b_file,
-                out_group_a_csv=out_a_file,
-                out_group_b_csv=out_b_file,
-                out_absdiff_csv=out_diff_file
-            )
+        for execution_number in range(1, 6):
+            for algorithm in constituent_algorithms:
+                path = f"../../data/filtered_predictions/window_{windowCount}_{execution_number}_constituent_methods_{algorithm}.tsv"
+                truth_file = f"../../data/windows/test_to_get_constituent_methods_{windowCount}.csv"
+                group_a_file = f"../../data/windows/gender/constituent/window_{windowCount}/female/window_{windowCount}_female.csv"
+                group_b_file = f"../../data/windows/gender/constituent/window_{windowCount}/male/window_{windowCount}_male.csv"      
+                out_a_file = f"../../data/MetricsForMethods/Fairness/gender/constituent/window_{windowCount}/execution_{execution_number}/{algorithm}_group_female.csv"
+                out_b_file = f"../../data/MetricsForMethods/Fairness/gender/constituent/window_{windowCount}/execution_{execution_number}/{algorithm}_group_male.csv"
+                out_diff_file = f"../../data/MetricsForMethods/Fairness/gender/constituent/window_{windowCount}/execution_{execution_number}/{algorithm}_absDiff_.csv"
+                calculator.run(
+                    predictions_tsv=path,
+                    truth_path=truth_file,
+                    group_a_csv=group_a_file,
+                    group_b_csv=group_b_file,
+                    out_group_a_csv=out_a_file,
+                    out_group_b_csv=out_b_file,
+                    out_absdiff_csv=out_diff_file
+                )
         
     for windowCount in range(1, 21):
-        for algorithm in hybrid_algorithms:
-            path = f"../../data/HybridPredictions/window_{windowCount}_predicted{algorithm}.tsv"
-            truth_file = f"../../data/windows/test_to_get_constituent_methods_{windowCount}.csv"
-            group_a_file = f"../../data/windows/gender/hybrid/window_{windowCount}/female/window_{windowCount}_female.csv"
-            group_b_file = f"../../data/windows/gender/hybrid/window_{windowCount}/male/window_{windowCount}_male.csv"
-            out_a_file = f"../../data/MetricsForMethods/Fairness/gender/hybrid/window_{windowCount}/{algorithm}_group_female.csv"
-            out_b_file = f"../../data/MetricsForMethods/Fairness/gender/hybrid/window_{windowCount}/{algorithm}_group_male.csv"
-            out_diff_file = f"../../data/MetricsForMethods/Fairness/gender/hybrid/window_{windowCount}/{algorithm}_absDiff_.csv"
-            calculator.run(
-                predictions_tsv=path,
-                truth_path=truth_file,
-                group_a_csv=group_a_file,
-                group_b_csv=group_b_file,
-                out_group_a_csv=out_a_file,
-                out_group_b_csv=out_b_file,
-                out_absdiff_csv=out_diff_file
-            )
+        for execution_number in range(1, 6):
+            for algorithm in hybrid_algorithms:
+                path = f"../../data/HybridPredictions/window_{windowCount}_{execution_number}_predicted{algorithm}.tsv"
+                truth_file = f"../../data/windows/test_to_get_constituent_methods_{windowCount}.csv"
+                group_a_file = f"../../data/windows/gender/hybrid/window_{windowCount}/female/window_{windowCount}_female.csv"
+                group_b_file = f"../../data/windows/gender/hybrid/window_{windowCount}/male/window_{windowCount}_male.csv"
+                out_a_file = f"../../data/MetricsForMethods/Fairness/gender/hybrid/window_{windowCount}/execution_{execution_number}/{algorithm}_group_female.csv"
+                out_b_file = f"../../data/MetricsForMethods/Fairness/gender/hybrid/window_{windowCount}/execution_{execution_number}/{algorithm}_group_male.csv"
+                out_diff_file = f"../../data/MetricsForMethods/Fairness/gender/hybrid/window_{windowCount}/execution_{execution_number}/{algorithm}_absDiff_.csv"
+                calculator.run(
+                    predictions_tsv=path,
+                    truth_path=truth_file,
+                    group_a_csv=group_a_file,
+                    group_b_csv=group_b_file,
+                    out_group_a_csv=out_a_file,
+                    out_group_b_csv=out_b_file,
+                    out_absdiff_csv=out_diff_file
+                )
 
 if __name__ == "__main__":
     kmeansGroupCalculator()

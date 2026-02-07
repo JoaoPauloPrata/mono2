@@ -14,7 +14,7 @@ print("EXEMPLO 1: Avaliação para um método específico")
 print("="*60)
 
 # Testa com o método BIAS da janela 1
-predictions_file = "data/filtered_predictions/window_1_constituent_methods_BIAS.tsv"
+predictions_file = "data/filtered_predictions/window_1_constituent_methods_BIASEDMF.tsv"
 truth_file = "data/windows/test_to_get_constituent_methods_1.csv"
 
 result = fairness_evaluator.evaluate_fairness_for_method(
