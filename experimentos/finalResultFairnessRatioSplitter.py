@@ -24,25 +24,33 @@ class FairnessRatioSplitter:
             return False
         return (l1 <= u2) and (l2 <= u1)
 
-    def _assign_groups(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _assign_groups(self, df: pd.DataFrame, ascending: bool) -> pd.DataFrame:
+        """
+        Agrupa por sobreposição direta (não transitiva). Métodos podem pertencer a múltiplos grupos.
+        """
         if df.empty:
             return df
-        df = df.sort_values(by="mean", ascending=False).reset_index(drop=True)
-        groups = []
-        current_group = 1
-        current_cis = []
-        for _, row in df.iterrows():
-            ci = (row.get("ci_lower"), row.get("ci_upper"))
-            if current_cis and any(self._overlaps(ci, gci) for gci in current_cis):
-                groups.append(current_group)
-                current_cis.append(ci)
+
+        df = df.sort_values(by="mean", ascending=ascending).reset_index(drop=True)
+        grouped_rows = []
+        group_id = 1
+        grouped_rows.append({**df.iloc[0].to_dict(), "group": group_id})
+
+        for i in range(1, len(df)):
+            prev = df.iloc[i - 1]
+            curr = df.iloc[i]
+            ci_prev = (prev.get("ci_lower"), prev.get("ci_upper"))
+            ci_curr = (curr.get("ci_lower"), curr.get("ci_upper"))
+
+            if self._overlaps(ci_prev, ci_curr):
+                group_id += 1
+                grouped_rows.append({**prev.to_dict(), "group": group_id})
+                grouped_rows.append({**curr.to_dict(), "group": group_id})
             else:
-                groups.append(current_group if not current_cis else current_group + 1)
-                if current_cis:
-                    current_group += 1
-                current_cis = [ci]
-        df["group"] = groups
-        return df
+                group_id += 1
+                grouped_rows.append({**curr.to_dict(), "group": group_id})
+
+        return pd.DataFrame(grouped_rows)
 
     def run(self) -> None:
         if not os.path.exists(self.input_path):
@@ -57,7 +65,8 @@ class FairnessRatioSplitter:
         os.makedirs(self.output_dir, exist_ok=True)
 
         for (analysis_type, metric), subset in df.groupby(["analysis_type", "metric"]):
-            subset_with_groups = self._assign_groups(subset.copy())
+            is_fairness = analysis_type.startswith("fairness")
+            subset_with_groups = self._assign_groups(subset.copy(), ascending=is_fairness)
             filename = f"{analysis_type}_{metric}.csv"
             out_path = os.path.join(self.output_dir, filename)
             subset_with_groups.to_csv(out_path, index=False)
