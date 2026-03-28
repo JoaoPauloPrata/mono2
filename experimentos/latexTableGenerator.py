@@ -4,17 +4,18 @@ import pandas as pd
 
 class LatexTableGenerator:
     """
-    Gera tabelas LaTeX a partir dos arquivos produzidos pelo finalResultSplitter.py.
-    Para cada CSV em final_results_split, salva um .txt contendo o ambiente tabular completo.
+    Gera tabelas LaTeX a partir dos arquivos produzidos pelo finalResultSplitterLite.py.
+    Para cada CSV em final_results_split_lite, salva um .txt contendo o ambiente tabular completo.
     """
 
     def __init__(
         self,
-        input_dir: str = "./data/MetricsForMethods/final_results_split",
-        output_dir: str = "./data/MetricsForMethods/latex_tables",
+        input_dir: str = "./data/MetricsForMethods/final_results_split_lite",
+        output_dir: str = "./data/MetricsForMethods/latex_tables_lite",
     ) -> None:
-        self.input_dir = input_dir.rstrip("/\\")
-        self.output_dir = output_dir.rstrip("/\\")
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.input_dir = os.path.join(base_dir, input_dir.rstrip("/\\"))
+        self.output_dir = os.path.join(base_dir, output_dir.rstrip("/\\"))
         os.makedirs(self.output_dir, exist_ok=True)
 
         self.analysis_labels = {
@@ -42,8 +43,8 @@ class LatexTableGenerator:
         return caption, label
 
     def _build_table(self, df: pd.DataFrame, analysis: str, metric: str) -> str:
-        # Ordena por grupo e média decrescente para legibilidade
-        df = df.sort_values(by=["group", "mean"], ascending=[True, False])
+        # Ordena por média decrescente para legibilidade
+        df = df.sort_values(by="mean", ascending=False)
 
         caption, label = self._caption_and_label(analysis, metric)
 
@@ -53,10 +54,9 @@ class LatexTableGenerator:
             f"\\caption{{{caption}}}\n"
             f"\\label{{{label}}}\n\n"
             "\\resizebox{\\textwidth}{!}{%\n"
-            "\\begin{tabular}{lcccccccc}\n"
+            "\\begin{tabular}{lccc}\n"
             "\\toprule\n"
-            "\\textbf{Método} & \\textbf{Média} & \\textbf{DP} & \\textbf{Mediana} & "
-            "\\textbf{Mín.} & \\textbf{Máx.} & \\textbf{IC 95\\% (Inf.)} & \\textbf{IC 95\\% (Sup.)} & \\textbf{Grupo} \\\\\n"
+            "\\textbf{Método} & \\textbf{Média} & \\textbf{IC 95\\% (Inf.)} & \\textbf{IC 95\\% (Sup.)} \\\\\n"
             "\\midrule\n"
         )
 
@@ -66,13 +66,8 @@ class LatexTableGenerator:
                 [
                     str(row["method"]),
                     self._fmt(row["mean"]),
-                    self._fmt(row["std"]),
-                    self._fmt(row["median"]),
-                    self._fmt(row["min"]),
-                    self._fmt(row["max"]),
                     self._fmt(row.get("ci_lower")),
                     self._fmt(row.get("ci_upper")),
-                    str(int(row["group"])) if not pd.isna(row["group"]) else "",
                 ]
             )
             lines.append(line + " \\\\")

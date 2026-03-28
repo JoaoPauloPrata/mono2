@@ -1,0 +1,6 @@
+group,methods,num_methods,mean_value
+1,StochasticItemKNN,1,0.533663
+2,NMF,1,0.561391
+3,"SVD, BIASEDMF",2,0.577765
+4,"BayesianRidge, Ridge, RandomForest, Bagging, AdaBoost, GradientBoosting, LinearSVR",7,0.508142
+5,Tweedie,1,0.491554

@@ -1,0 +1,26 @@
+\begin{table}[H]
+\centering
+\caption{Resultados de fairness por gênero (F1) ao longo das janelas temporais.}
+\label{tab:fairness_gender-f1}
+
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+\textbf{Método} & \textbf{Média} & \textbf{IC 95\% (Inf.)} & \textbf{IC 95\% (Sup.)} \\
+\midrule
+Tweedie & 0.07775 & 0.06970 & 0.08580 \\
+Ridge & 0.07338 & 0.06519 & 0.08158 \\
+BayesianRidge & 0.07314 & 0.06496 & 0.08132 \\
+AdaBoost & 0.07313 & 0.06495 & 0.08131 \\
+RandomForest & 0.07139 & 0.06310 & 0.07969 \\
+GradientBoosting & 0.07083 & 0.06273 & 0.07894 \\
+LinearSVR & 0.07003 & 0.06210 & 0.07796 \\
+Bagging & 0.06956 & 0.06167 & 0.07746 \\
+StochasticItemKNN & 0.05062 & 0.04265 & 0.05860 \\
+SVD & 0.04159 & 0.03529 & 0.04789 \\
+NMF & 0.04031 & 0.03382 & 0.04679 \\
+BIASEDMF & 0.03712 & 0.03090 & 0.04333 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

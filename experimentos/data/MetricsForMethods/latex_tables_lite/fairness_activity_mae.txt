@@ -1,0 +1,26 @@
+\begin{table}[H]
+\centering
+\caption{Resultados de fairness por atividade (MAE) ao longo das janelas temporais.}
+\label{tab:fairness_activity-mae}
+
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+\textbf{Método} & \textbf{Média} & \textbf{IC 95\% (Inf.)} & \textbf{IC 95\% (Sup.)} \\
+\midrule
+NMF & 0.10214 & 0.08349 & 0.12078 \\
+LinearSVR & 0.07708 & 0.06714 & 0.08702 \\
+RandomForest & 0.07657 & 0.06656 & 0.08658 \\
+GradientBoosting & 0.07654 & 0.06657 & 0.08652 \\
+BayesianRidge & 0.07522 & 0.06549 & 0.08496 \\
+AdaBoost & 0.07518 & 0.06528 & 0.08508 \\
+Ridge & 0.07515 & 0.06542 & 0.08489 \\
+Bagging & 0.07495 & 0.06521 & 0.08470 \\
+Tweedie & 0.07488 & 0.06477 & 0.08498 \\
+StochasticItemKNN & 0.06767 & 0.05192 & 0.08341 \\
+BIASEDMF & 0.04766 & 0.04350 & 0.05181 \\
+SVD & 0.04368 & 0.03904 & 0.04833 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

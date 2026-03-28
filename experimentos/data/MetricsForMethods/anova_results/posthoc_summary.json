@@ -1,0 +1,8 @@
+{
+  "description": "Análise post-hoc (Tukey HSD) identificando grupos de métodos empatados",
+  "alpha": 0.05,
+  "generated_files": [
+    "tukey_*.csv - Comparações pairwise detalhadas",
+    "grouped_*.csv - Grupos de métodos empatados"
+  ]
+}

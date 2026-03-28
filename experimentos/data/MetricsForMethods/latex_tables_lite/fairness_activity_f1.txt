@@ -1,0 +1,26 @@
+\begin{table}[H]
+\centering
+\caption{Resultados de fairness por atividade (F1) ao longo das janelas temporais.}
+\label{tab:fairness_activity-f1}
+
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+\textbf{Método} & \textbf{Média} & \textbf{IC 95\% (Inf.)} & \textbf{IC 95\% (Sup.)} \\
+\midrule
+Tweedie & 0.08196 & 0.06871 & 0.09522 \\
+RandomForest & 0.08024 & 0.06662 & 0.09387 \\
+AdaBoost & 0.07853 & 0.06588 & 0.09117 \\
+GradientBoosting & 0.07580 & 0.06363 & 0.08798 \\
+BayesianRidge & 0.07485 & 0.06295 & 0.08675 \\
+Ridge & 0.07465 & 0.06283 & 0.08647 \\
+LinearSVR & 0.07307 & 0.06191 & 0.08424 \\
+Bagging & 0.07280 & 0.06143 & 0.08416 \\
+StochasticItemKNN & 0.05469 & 0.04861 & 0.06076 \\
+NMF & 0.05252 & 0.04467 & 0.06037 \\
+BIASEDMF & 0.03785 & 0.03301 & 0.04269 \\
+SVD & 0.03721 & 0.03178 & 0.04264 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
