@@ -2,70 +2,153 @@
 
 ## Project Overview
 
-This is a research codebase for a **monograph/thesis** comparing collaborative filtering vs hybrid ensemble recommender systems, with explicit fairness, statistical significance, and temporal robustness analysis on the MovieLens 1M dataset.
+Research codebase for a **monograph/thesis** comparing collaborative filtering vs hybrid ensemble recommender systems, with fairness, statistical significance, and temporal robustness analysis on MovieLens 1M.
 
 The `data/` folder is **output-only** — never edit files inside it.
 
 ---
 
-## Architecture
+## Project Layout
 
-### Pipeline Stages (run in order)
+```
+experimentos/
+├── pyproject.toml               # dependencies + package config
+├── conftest.py                  # adds src/ to sys.path for pytest
+│
+├── src/recsys/                  # installable package (src layout)
+│   ├── data/                    # data loading & splitting
+│   │   ├── time_period_splitter.py    # sliding-window temporal splits
+│   │   ├── post_processor.py          # filter/align predictions
+│   │   ├── gender_splitter.py         # M/F user group files
+│   │   └── activity_splitter.py       # KMeans high/low activity groups
+│   │
+│   ├── models/                  # recommender algorithms
+│   │   ├── stochastic_item_knn.py     # custom stochastic item-item KNN
+│   │   ├── constituent_methods.py     # SVD, BiasedMF, NMF, StochasticKNN wrappers
+│   │   ├── hybrid_ensemble.py         # 8 regression ensemble methods
+│   │   └── recommender.py             # orchestrator over models
+│   │
+│   ├── evaluation/              # metric computation
+│   │   ├── quality_metrics.py         # RMSE, NDCG, F1, MAE, GeoRisk
+│   │   ├── fairness_metrics.py        # per-group abs diff + runner functions
+│   │   └── overlap_validator.py       # train/test leakage check
+│   │
+│   ├── aggregation/             # cross-window/exec result aggregation
+│   │   ├── quality_aggregator.py
+│   │   ├── final_result_aggregator.py
+│   │   ├── fairness_ratio_aggregator.py
+│   │   ├── group_quality_aggregator.py
+│   │   └── vulnerable_group_aggregator.py
+│   │
+│   ├── analysis/                # statistical tests
+│   │   ├── anova.py
+│   │   ├── post_hoc.py                # Tukey HSD
+│   │   ├── pearson_correlation.py
+│   │   └── georisk_runner.py
+│   │
+│   ├── reporting/               # output artefacts
+│   │   ├── result_splitter.py
+│   │   ├── result_splitter_lite.py
+│   │   ├── fairness_ratio_splitter.py
+│   │   ├── quality_splitter.py
+│   │   ├── vulnerability_splitter.py
+│   │   ├── latex_table_generator.py
+│   │   ├── chart_generator.py
+│   │   └── group_chart_generator.py
+│   │
+│   └── pipeline/                # per-user/per-metric helpers
+│       ├── user_metric_calculator.py
+│       └── metric_matrix_builder.py
+│
+├── scripts/                     # runnable entry points (no logic)
+│   ├── run_pipeline.py          # main pipeline (data split → predict → evaluate)
+│   ├── run_fairness_evaluation.py   # runs kmeans + gender group fairness
+│   ├── splitter_view.py         # exploratory: rating count histogram
+│   └── analyze_fairness_simple.py   # exploratory: simple fairness printout
+│
+└── tests/
+    ├── unit/
+    │   ├── test_quality_metrics.py
+    │   ├── test_georisk.py
+    │   └── test_final_result_aggregator.py
+    └── integration/
+```
 
-1. **Data Splitting** — `main.py` → calls `src/DataProcessing/TimePeriodSpliter.py`
-2. **Base Predictions** — `src/Recommender.py` → calls `src/Methods/ConstituentMethods.py`
-3. **Filtering & Alignment** — `src/DataProcessing/PosProcess.py`
-4. **Hybrid Predictions** — `src/Methods/RegressionMethodsWithFineTuning.py`
-5. **Quality Metrics** — `src/Metrics/Evaluator.py`
-6. **Fairness Metrics** — `gender.py` / `kmeans.py` → `src/Metrics/absDiffCalculator.py`
-7. **Statistical Analysis** — `anovaAnalysis.py`, `postHocAnalysis.py`, `risk.py`, `pearsonCorrelation.py`
-8. **Aggregation** — `evaluateQuality.py`, `finalResult.py`, `finalResultFairnessRatio.py`, `finalResultSplitter.py`
-9. **Reporting** — `chartGenerator.py`, `latexTableGenerator.py`, `byMetric.py`, `byUser.py`
+---
+
+## Running
+
+```bash
+# activate env
+conda activate monoenv
+
+# run tests
+pytest tests/
+
+# run main pipeline (predict + evaluate)
+python scripts/run_pipeline.py
+
+# run fairness evaluation
+python scripts/run_fairness_evaluation.py
+```
+
+---
+
+## Pipeline Stages (run in order)
+
+1. **Data Split** — `scripts/run_pipeline.py` → `recsys.data.time_period_splitter`
+2. **Base Predictions** — `recsys.models.recommender` → `recsys.models.constituent_methods`
+3. **Filter & Align** — `recsys.data.post_processor`
+4. **Hybrid Predictions** — `recsys.models.hybrid_ensemble`
+5. **Quality Metrics** — `recsys.evaluation.quality_metrics.Evaluator.evaluateAllMetricsForAllMethods`
+6. **Fairness Groups** — `recsys.data.gender_splitter` / `recsys.data.activity_splitter`
+7. **Fairness Metrics** — `recsys.evaluation.fairness_metrics` (`kmeansGroupCalculator`, `genderGroupCalculator`)
+8. **Per-user Metrics** — `recsys.pipeline.user_metric_calculator`
+9. **Matrix Build** — `recsys.pipeline.metric_matrix_builder`
+10. **GeoRisk** — `recsys.analysis.georisk_runner`
+11. **Aggregation** — `recsys.aggregation.*`
+12. **ANOVA + Post-Hoc** — `recsys.analysis.anova` / `recsys.analysis.post_hoc`
+13. **Split Results** — `recsys.reporting.*_splitter`
+14. **Charts + LaTeX** — `recsys.reporting.chart_generator` / `latex_table_generator`
 
 ---
 
 ## Methods Under Evaluation
 
-### Constituent (Base) Methods — 4 total
+### Constituent (4)
 | Method | File | Algorithm |
 |--------|------|-----------|
-| SVD | `ConstituentMethods.py` | BiasedSVD, 50 features, randomized |
-| BiasedMF | `ConstituentMethods.py` | Matrix Factorization, 50 features, 20 iters, CD |
-| NMF | `ConstituentMethods.py` | Non-negative MF, 15 factors, 50 epochs |
-| StochasticItemKNN | `StochasticItemKNN.py` | Item-item cosine + temperature-based stochastic sampling |
+| SVD | `constituent_methods.py` | BiasedSVD, 50 features |
+| BiasedMF | `constituent_methods.py` | MF, 50 features, 20 iters, CD |
+| NMF | `constituent_methods.py` | NMF, 15 factors, 50 epochs |
+| StochasticItemKNN | `stochastic_item_knn.py` | Item-item cosine + temperature sampling |
 
-### Hybrid (Ensemble Regression) Methods — 8 total
+### Hybrid Ensemble (8)
 BayesianRidge, Ridge, Tweedie, RandomForest, Bagging, AdaBoost, GradientBoosting, LinearSVR
 
-- Input features: predictions from the 4 constituent methods
-- Weights (fixed): 15%, 15%, 12%, 15%, 12%, 10%, 13%, 8%
-- Hyperparameters: optimized via `RandomizedSearchCV`, saved to `data/optimized_parameters/`
+- Input: predictions from the 4 constituent methods as features
+- Hyperparameters: `RandomizedSearchCV`, saved to `data/optimized_parameters/`
 
 ---
 
 ## Experimental Design
 
 - **Dataset**: MovieLens 1M (`data/ml-1m/ratings.dat`, `data/ml-1m/users.dat`)
-- **Windows**: 20 sliding temporal windows (15-month span, 1-month step)
-- **Executions**: 5 independent runs per window (for statistical robustness)
-- **Window split**:
-  - `train_to_get_regression_train_data`: months 0–12
-  - `test_to_get_regression_train_data`: months 12–15
-  - `train_to_get_constituent_methods`: months 0–12
-  - `test_to_get_constituent_methods`: months 12–15
+- **Windows**: 20 sliding windows (15-month span, 1-month step)
+- **Executions**: 5 independent runs per window
 
 ---
 
 ## Metrics
 
-| Metric | Formula | Direction |
-|--------|---------|-----------|
-| RMSE | sqrt(mean((ŷ−y)²)) | lower = better |
-| NDCG@10 | DCG@10 / IDCG@10 | higher = better |
-| F1@3.5 | Binary relevance at threshold 3.5 | higher = better |
-| MAE | mean(|ŷ−y|) | lower = better |
-| GeoRisk | sqrt((S/c) × Φ(z/c)), α=0.05 | lower = better |
-| Fairness Diff | |metric_groupA − metric_groupB| | lower = better |
+| Metric | Direction |
+|--------|-----------|
+| RMSE | lower = better |
+| NDCG@10 | higher = better |
+| F1@3.5 | higher = better |
+| MAE | lower = better |
+| GeoRisk | higher = better |
+| Fairness Diff (|groupA − groupB|) | lower = better |
 
 ### Fairness Groups
 - **Gender**: Male / Female (from `data/ml-1m/users.dat`)
@@ -73,69 +156,20 @@ BayesianRidge, Ridge, Tweedie, RandomForest, Bagging, AdaBoost, GradientBoosting
 
 ---
 
-## Key Source Files
+## Import Conventions
 
-| File | Responsibility |
-|------|---------------|
-| `main.py` | Top-level pipeline orchestrator |
-| `src/Recommender.py` | Runs constituent methods across all windows/execs |
-| `src/Methods/ConstituentMethods.py` | SVD, BiasedMF, NMF implementations |
-| `src/Methods/StochasticItemKNN.py` | Custom stochastic KNN recommender |
-| `src/Methods/RegressionMethodsWithFineTuning.py` | 8 hybrid regression ensembles |
-| `src/DataProcessing/TimePeriodSpliter.py` | Sliding-window temporal splits |
-| `src/DataProcessing/PosProcess.py` | Prediction filtering and alignment |
-| `src/Metrics/Evaluator.py` | RMSE, NDCG, F1, MAE computation |
-| `src/Metrics/absDiffCalculator.py` | Per-group fairness metrics |
-| `run_fairness_evaluation.py` | Orchestrates full fairness analysis |
-| `anovaAnalysis.py` | One-way ANOVA across methods |
-| `postHocAnalysis.py` | Tukey HSD post-hoc pairwise tests |
-| `risk.py` | GeoRisk calculator |
-| `pearsonCorrelation.py` | Pairwise method correlation |
-| `overlapValidator.py` | Validates no train/test leakage |
-| `finalResultSplitter.py` | Splits aggregated results per metric/analysis |
-| `latexTableGenerator.py` | Generates LaTeX tables for the thesis |
+All internal imports use the `recsys` package name:
 
----
-
-## Dependencies
-
-Defined in `src/Methods/requirements.txt`:
-- `pandas`, `numpy`, `scikit-learn`, `scipy`
-- `lenskit` — for SVD and BiasedMF
-- `surprise` — for NMF
-
----
-
-## Output Structure (data/ — do not edit)
-
-```
-data/
-├── windows/                         temporal train/test splits
-├── predictions/                     constituent method TSV predictions
-├── filtered_predictions/            aligned predictions (common user-item pairs)
-├── HybridPredictions/               ensemble regression outputs
-├── optimized_parameters/            saved hyperparameter configs
-├── MetricsForMethods/
-│   ├── MetricsForWindow{w}_{e}.csv  quality metrics per window/exec
-│   ├── Fairness/                    per-group fairness metrics
-│   │   ├── gender/
-│   │   └── kmeans/
-│   ├── GeoRisk/                     risk scores per window/exec
-│   ├── ByUser/                      per-user metric breakdowns
-│   ├── ByMetric/                    method × user matrices
-│   ├── anova_results/               ANOVA + Tukey HSD outputs
-│   ├── final_results.csv
-│   ├── quality_results.csv
-│   └── fairness_ratio_results.csv
-├── charts/                          PNG bar charts with CI error bars
-└── latex_tables_lite/               LaTeX table .txt files
+```python
+from recsys.evaluation.quality_metrics import Evaluator
+from recsys.models.recommender import Recommender
+from recsys.evaluation.fairness_metrics import GroupMetricsDiffCalculator
 ```
 
+`conftest.py` at the project root adds `src/` to `sys.path` automatically for pytest. For scripts, either run `pip install -e .` or ensure `src/` is on the Python path.
+
 ---
 
-## Notes
+## `__file__`-Relative Paths
 
-- All prediction files are TSV format with columns: `user`, `item`, `prediction`
-- Filtering step (`PosProcess.py`) ensures all methods share the same user-item pairs before metric computation
-- ANOVA groups statistically similar methods; Tukey HSD identifies which pairs differ (p < 0.05)
-- The 5-execution design enables confidence intervals and guards against random seed sensitivity
+Classes in `src/recsys/reporting/` and `src/recsys/aggregation/` that resolve paths relative to the project root use `Path(__file__).resolve().parents[3]` (3 levels up: `module.py` → subpackage → `recsys` → `src` → project root).
