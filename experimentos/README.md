@@ -39,11 +39,7 @@ Run the scripts below **in order**. Each stage depends on the outputs of the pre
 Splits the dataset into 20 temporal windows (15-month span, 1-month step). Each window generates train/test splits for both the constituent methods (12+3 months) and the hybrid meta-model training (9+3+3 months).
 
 ```bash
-python -c "
-from scripts.run_pipeline import split_data, split_full_windows
-split_data()
-split_full_windows()
-"
+python scripts/prepare_data.py
 ```
 
 Output: `data/windows/`
@@ -55,20 +51,26 @@ Output: `data/windows/`
 Trains and generates predictions for the 4 base (Level 0) algorithms — BiasedSVD, BiasedMF, NMF, StochasticItemKNN — for every window and execution.
 
 ```bash
-python -c "
-import pandas as pd
-from scripts.run_pipeline import load_data_and_run
-for exec_number in range(1, 6):
-    for window_number in range(1, 21):
-        load_data_and_run(window_number, exec_number)
-"
+python scripts/run_constituent_predictions.py
 ```
 
 Output: `data/predictions/`
 
 ---
 
-### Stage 3 — Hybrid Predictions + Quality Metrics
+### Stage 3 — Post-processing (Filter Common Pairs)
+
+Filters the constituent prediction files to keep only the (user, item) pairs that received a valid prediction from **every** constituent method. Also aligns the test splits to those pairs. This ensures the hybrid meta-model trains and evaluates on a consistent set.
+
+```bash
+python scripts/run_post_processor.py
+```
+
+Output: `data/filtered_predictions/`, `data/windows/processed/`
+
+---
+
+### Stage 4 — Hybrid Predictions + Quality Metrics
 
 Trains the 8 regression meta-models (Level 1: BayesianRidge, Ridge, Tweedie, RandomForest, Bagging, AdaBoost, GradientBoosting, LinearSVR) using the constituent predictions as features, then evaluates RMSE, NDCG@10, F1@3.5, and MAE for all methods.
 
@@ -80,7 +82,7 @@ Output: `data/MetricsForMethods/MetricsForWindow{w}_{exec}.csv`
 
 ---
 
-### Stage 4 — Fairness Evaluation (Gender + Activity Groups)
+### Stage 5 — Fairness Evaluation (Gender + Activity Groups)
 
 Computes the Absolute Difference (AD) fairness metric for two group dimensions:
 - **Gender**: Male vs. Female (from `users.dat`)
@@ -94,7 +96,7 @@ Output: `data/MetricsForMethods/Fairness/`
 
 ---
 
-### Stage 5 — Per-user Metrics
+### Stage 6 — Per-user Metrics
 
 Computes RMSE, NDCG, F1, and MAE at the individual user level across all windows and executions.
 
@@ -106,7 +108,7 @@ Output: `data/MetricsForMethods/ByUser/`
 
 ---
 
-### Stage 6 — Metric Matrix Build
+### Stage 7 — Metric Matrix Build
 
 Organizes per-user metrics into matrices (users × algorithms) per window/execution/metric, as input for GeoRisk computation.
 
@@ -118,7 +120,7 @@ Output: `data/MetricsForMethods/ByMetric/`
 
 ---
 
-### Stage 7 — GeoRisk
+### Stage 8 — GeoRisk
 
 Applies the GeoRisk formula (α=0.05) to the metric matrices to measure risk-sensitiveness of each algorithm.
 
@@ -130,7 +132,7 @@ Output: `data/MetricsForMethods/GeoRisk/`
 
 ---
 
-### Stage 8 — Aggregation
+### Stage 9 — Aggregation
 
 Aggregates results across windows and executions (mean, std, median, min, max, 95% CI) for quality metrics, fairness, and GeoRisk.
 
@@ -146,7 +148,7 @@ Output: `data/MetricsForMethods/`
 
 ---
 
-### Stage 9 — Statistical Analysis (ANOVA + Tukey HSD)
+### Stage 10 — Statistical Analysis (ANOVA + Tukey HSD)
 
 Runs one-way ANOVA (α=0.05) across the 100 samples (20 windows × 5 executions) per algorithm, followed by Tukey HSD post-hoc pairwise comparisons.
 
@@ -159,7 +161,7 @@ Output: `data/MetricsForMethods/anova_results/`
 
 ---
 
-### Stage 10 — Result Splitting
+### Stage 11 — Result Splitting
 
 Splits the aggregated results into separate files per metric and analysis type for easier reporting.
 
@@ -175,7 +177,7 @@ Output: `data/MetricsForMethods/final_results_split/`
 
 ---
 
-### Stage 11 — Charts and LaTeX Tables
+### Stage 12 — Charts and LaTeX Tables
 
 Generates the bar charts (with 95% CI error bars) and LaTeX tables used in the paper.
 

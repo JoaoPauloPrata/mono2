@@ -1,3 +1,4 @@
+import os
 import time
 
 import pandas as pd
@@ -8,6 +9,7 @@ from recsys.models.recommender import Recommender
 
 
 def split_data():
+    os.makedirs("./data/windows", exist_ok=True)
     datapath = "./data/ml-1m/"
     ratings_cols = ['user', 'item', 'rating', 'timestamp']
     ratings = pd.read_csv(datapath + 'ratings.dat', sep='::', names=ratings_cols, engine='python', encoding='latin-1')
@@ -41,6 +43,7 @@ def load_data_and_run(window_number, exec_number):
 
 
 def split_full_windows():
+    os.makedirs("./data/windows/full", exist_ok=True)
     datapath = "./data/ml-1m/"
     ratings_cols = ['user', 'item', 'rating', 'timestamp']
     ratings = pd.read_csv(datapath + 'ratings.dat', sep='::', names=ratings_cols, engine='python', encoding='latin-1')

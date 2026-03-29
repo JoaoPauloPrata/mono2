@@ -2,7 +2,10 @@ import pandas as pd
 from functools import reduce
 import os
 from glob import glob
+from pathlib import Path
 import numpy as np
+
+_PROJECT_ROOT = str(Path(__file__).resolve().parents[3])
 
 def filter_common_pairs_in_files(input_dir, output_dir):
     # Percorre todos os arquivos na pasta input_dir
@@ -62,8 +65,8 @@ def filter_to_common_pairs_by_window_and_type():
     Filtra todos os arquivos de predições para garantir que tenham os mesmos pares user-item
     por janela e tipo (constituent_methods ou scikit_train).
     """
-    base_dir = "../../data/predictions"
-    output_dir = "../../data/filtered_predictions"
+    base_dir = os.path.join(_PROJECT_ROOT, "data", "predictions")
+    output_dir = os.path.join(_PROJECT_ROOT, "data", "filtered_predictions")
     
     # Cria diretório de saída se não existir
     os.makedirs(output_dir, exist_ok=True)
@@ -168,8 +171,8 @@ def add_header_to_hybrid():
     usando os pares user/item dos arquivos filtered_predictions
     """
     algo = ["BayesianRidge", "Tweedie", "Ridge", "RandomForest", "Bagging", "AdaBoost", "GradientBoosting", "LinearSVR"]
-    hybrid_dir = "../../data/HybridPredictions"
-    filtered_dir = "../../data/filtered_predictions"
+    hybrid_dir = os.path.join(_PROJECT_ROOT, "data", "HybridPredictions")
+    filtered_dir = os.path.join(_PROJECT_ROOT, "data", "filtered_predictions")
     
     # Busca janelas e execuções disponíveis
     windows_execs = set()
@@ -230,9 +233,9 @@ def filter_test_data_to_match_predictions():
     apenas os pares user-item presentes nos arquivos de predição filtrados.
     Salva os arquivos filtrados em data/windows/processed para preservar os originais.
     """
-    filtered_dir = "../../data/filtered_predictions"
-    windows_dir = "../../data/windows"
-    processed_dir = "../../data/windows/processed"
+    filtered_dir = os.path.join(_PROJECT_ROOT, "data", "filtered_predictions")
+    windows_dir = os.path.join(_PROJECT_ROOT, "data", "windows")
+    processed_dir = os.path.join(_PROJECT_ROOT, "data", "windows", "processed")
     
     # Cria diretório processed se não existir
     os.makedirs(processed_dir, exist_ok=True)
